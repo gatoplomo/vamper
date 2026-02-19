@@ -1,0 +1,26 @@
+{
+  "horario": "Líneas locales - Servicio Nocturno",
+  "telefono": "56900000000", 
+  "catalogo": [
+    {
+      "nombre": "Línea 42 - Don Patricio",
+      "desc": "WhatsApp Directo: +569 1234 5678",
+      "precio": 0
+    },
+    {
+      "nombre": "Línea 15 - Sector Centro",
+      "desc": "WhatsApp Directo: +569 8765 4321",
+      "precio": 0
+    },
+    {
+      "nombre": "Colectivo Particular - Juan",
+      "desc": "WhatsApp Directo: +569 5555 4444",
+      "precio": 0
+    },
+    {
+      "nombre": "Línea 28 - Variante Agua Santa",
+      "desc": "WhatsApp Directo: +569 3333 2222",
+      "precio": 0
+    }
+  ]
+}

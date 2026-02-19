@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAMPED ADMIN | Panel de Control</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root { --bg: #050505; --card: #0f0f0f; --accent: #ff0040; --border: #1a1a1a; --service: #00d4ff; }
+        body { background-color: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
+        
+        .navbar { background: rgba(5,5,5,0.98); border-bottom: 1px solid var(--border); height: 70px; z-index: 1000; }
+        
+        .view-section { display: none; height: calc(100vh - 70px); overflow-y: auto; }
+        .active-view { display: block; }
+        
+        /* Grid de Usuarios */
+        .user-card { position: relative; aspect-ratio: 1/1; background: var(--card); border: 1px solid var(--border); cursor: pointer; overflow: hidden; }
+        .user-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        .user-card:hover img { transform: scale(1.05); }
+
+        .user-info-tag {
+            position: absolute; bottom: 0; padding: 8px; width: 100%;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
+        }
+        .user-name { font-size: 0.85rem; font-weight: bold; display: block; }
+        .user-status-text { 
+            color: var(--service); font-size: 0.65rem; font-weight: normal; margin-top: 2px; 
+            text-transform: uppercase; letter-spacing: 0.5px; display: block;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        
+        /* Navbar Status Badge */
+        .my-status-badge { 
+            font-size: 0.65rem; color: var(--service); max-width: 120px; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            opacity: 0.8; font-style: italic;
+        }
+
+        /* Slider de Fotos en Modal */
+        .slider-container { position: relative; width: 100%; aspect-ratio: 1/1; margin-bottom: 15px; border-radius: 5px; overflow: hidden; }
+        #modalImg { width: 100%; height: 100%; object-fit: cover; }
+        .slider-btn { 
+            position: absolute; top: 50%; transform: translateY(-50%); 
+            background: rgba(0,0,0,0.5); color: white; border: none; 
+            padding: 10px 15px; cursor: pointer; z-index: 10; font-size: 1.2rem;
+        }
+        .slider-btn:hover { background: var(--accent); }
+        .btn-prev { left: 0; border-radius: 0 5px 5px 0; }
+        .btn-next { right: 0; border-radius: 5px 0 0 5px; }
+
+        /* Chat UI Monitoreo */
+        .chat-sidebar { background: #080808; border-right: 1px solid var(--border); overflow-y: auto; }
+        .chat-item { cursor: pointer; border-left: 3px solid transparent; transition: 0.2s; border-bottom: 1px solid #111; }
+        .chat-item:hover { background: #1a1a1a; }
+        .chat-item.active { background: #151515; border-left-color: var(--accent); }
+        
+        .chat-messages { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; background: #050505; }
+        .msg-bubble { padding: 8px 15px; border-radius: 18px; max-width: 80%; margin-bottom: 10px; word-wrap: break-word; font-size: 0.95rem; }
+        .msg-sent { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 2px; }
+        .msg-received { align-self: flex-start; background: #262626; color: #e0e0e0; border-bottom-left-radius: 2px; }
+        
+        .vamped-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; align-items: center; justify-content: center; }
+        .modal-content-vamped { background: #0f0f0f; border: 1px solid var(--accent); width: 90%; max-width: 350px; padding: 15px; border-radius: 10px; }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar px-3 d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-4">
+        <strong style="letter-spacing:4px; cursor:pointer; color: var(--accent); font-size: 1.2rem;" onclick="showView('radar-view')">VAMPED ADMIN</strong>
+        <div class="d-flex gap-3 align-items-center">
+            <i class="bi bi-chat-dots fs-4" style="cursor:pointer" onclick="showView('chat-view')"></i>
+            <div class="d-flex align-items-center gap-1">
+                <i class="bi bi-shield-lock fs-4" style="color: var(--service);"></i>
+                <span class="badge bg-danger ms-1" style="font-size: 0.5rem;">MODO DIOS</span>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+        <button class="btn btn-outline-danger btn-sm" onclick="loadNearby()">ESCANEAR SISTEMA</button>
+        <div class="dropdown">
+            <img id="myProfilePic" src="" 
+                 style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid var(--accent); cursor:pointer; display:none;" 
+                 data-bs-toggle="dropdown">
+            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
+                <li><a class="dropdown-item py-2" href="#" onclick="logout()"><i class="bi bi-door-open me-2"></i>Cerrar Sesión Admin</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div id="radar-view" class="view-section active-view container-fluid p-2">
+    <div class="row g-1 row-cols-2 row-cols-md-4 row-cols-lg-6" id="main-grid"></div>
+</div>
+
+<div id="chat-view" class="view-section container-fluid g-0">
+    <div class="row h-100 g-0">
+        <div class="col-4 col-md-3 chat-sidebar" id="conversations-list"></div>
+        <div class="col-8 col-md-9 d-flex flex-column">
+            <div id="chat-header" class="p-3 border-bottom border-dark small fw-bold text-uppercase" style="letter-spacing: 1px; background: #080808;">Panel de Monitoreo</div>
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="p-3 border-top border-dark" style="background: #080808;">
+                <div class="input-group">
+                    <input type="text" id="chat-input" class="form-control bg-transparent text-white border-secondary" placeholder="Intervenir como ADMIN...">
+                    <button class="btn btn-danger" onclick="sendMessage()">ENVIAR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="profileModal" class="vamped-modal-overlay" onclick="this.style.display='none'">
+    <div class="modal-content-vamped text-center" onclick="event.stopPropagation()">
+        <div class="slider-container">
+            <button class="slider-btn btn-prev" onclick="changePhoto(-1)"><i class="bi bi-chevron-left"></i></button>
+            <img id="modalImg" src="">
+            <button class="slider-btn btn-next" onclick="changePhoto(1)"><i class="bi bi-chevron-right"></i></button>
+        </div>
+        <h5 id="modalName" class="mb-0"></h5>
+        <div id="modalStatusDisplay" class="small mb-2" style="color: var(--service); font-style: italic;"></div>
+        <p id="modalDesc" class="small text-muted mb-3"></p>
+        
+        <div class="d-grid gap-2">
+            <button class="btn btn-danger" onclick="goToChat()">INTERVENIR CHAT</button>
+            <button class="btn btn-warning fw-bold text-dark" onclick="deleteUser()">
+                <i class="bi bi-trash3-fill me-1"></i> ELIMINAR USUARIO
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const socket = io();
+    const token = localStorage.getItem('vamped_token');
+    let myUser = JSON.parse(localStorage.getItem('vamped_user')) || {};
+    let selectedUser = null;
+    let currentPhotoIndex = 0;
+    let userPhotos = [];
+
+    function showView(v) { 
+        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active-view'));
+        document.getElementById(v).classList.add('active-view');
+        if(v === 'chat-view') loadConversations();
+    }
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = '/'; 
+    }
+
+    // PRIVILEGIO ADMIN: ELIMINAR USUARIO
+    async function deleteUser() {
+        if (!selectedUser) return;
+        if (!confirm(`¿ESTÁS ABSOLUTAMENTE SEGURO? Eliminarás a ${selectedUser.name} permanentemente.`)) return;
+
+        try {
+            const res = await fetch(`/api/user/delete/${selectedUser.id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                alert("Usuario borrado del sistema.");
+                document.getElementById('profileModal').style.display = 'none';
+                loadNearby();
+            } else { alert("Error: No tienes permisos suficientes."); }
+        } catch (e) { console.error(e); }
+    }
+
+    socket.on('connect', () => { if (myUser.id) socket.emit('join', myUser.id); });
+
+    socket.on('new_message', (data) => {
+        if (selectedUser && selectedUser.id === data.from) appendMessage(data.text, 'received');
+        else loadConversations();
+    });
+
+    async function syncMyProfile() {
+        if (!token) return logout();
+        try {
+            const res = await fetch('/api/user/me', { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await res.json();
+            if (res.ok) {
+                myUser = { id: data._id, nickname: data.nickname, photo: data.photo };
+                localStorage.setItem('vamped_user', JSON.stringify(myUser));
+                const pic = document.getElementById('myProfilePic');
+                pic.src = data.photo || 'https://via.placeholder.com/100';
+                pic.style.display = 'block';
+                socket.emit('join', myUser.id);
+            } else { logout(); }
+        } catch(e) { console.error(e); }
+    }
+
+    async function loadNearby() {
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const { longitude, latitude } = pos.coords;
+            const res = await fetch(`/api/nearby?lng=${longitude}&lat=${latitude}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const users = await res.json();
+            
+            document.getElementById('main-grid').innerHTML = users.map(u => {
+                const isService = u.accountType === 'servicio';
+                // Slider logic for admin too
+                const photoData = u.photos && u.photos.length > 0 ? JSON.stringify(u.photos) : JSON.stringify([u.photo]);
+                
+                return `
+                <div class="col">
+                    <div class="user-card" onclick='openProfile(${photoData}, "${u.nickname}", "${u._id}", "${u.description || ''}", "${u.status || ''}")'>
+                        <img src="${u.photo || 'https://via.placeholder.com/300'}">
+                        <div class="user-info-tag">
+                            <span class="user-name" style="color: ${isService ? 'var(--service)' : 'white'}">
+                                ${isService ? '<i class="bi bi-gem me-1"></i>' : ''} ${u.nickname}
+                            </span>
+                            <span class="user-status-text">${u.status || ''}</span>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        });
+    }
+
+    function openProfile(photos, name, id, desc, status) {
+        userPhotos = Array.isArray(photos) ? photos : [photos];
+        currentPhotoIndex = 0;
+        selectedUser = { id, name, img: userPhotos[0] };
+        
+        document.getElementById('modalImg').src = userPhotos[0];
+        document.getElementById('modalName').innerText = name;
+        document.getElementById('modalStatusDisplay').innerText = status ? `"${status}"` : "";
+        document.getElementById('modalDesc').innerText = desc;
+        document.getElementById('profileModal').style.display = 'flex';
+        
+        document.querySelectorAll('.slider-btn').forEach(b => b.style.display = userPhotos.length > 1 ? 'block' : 'none');
+    }
+
+    function changePhoto(dir) {
+        currentPhotoIndex += dir;
+        if (currentPhotoIndex < 0) currentPhotoIndex = userPhotos.length - 1;
+        if (currentPhotoIndex >= userPhotos.length) currentPhotoIndex = 0;
+        document.getElementById('modalImg').src = userPhotos[currentPhotoIndex];
+    }
+
+    async function loadConversations() {
+        const res = await fetch('/api/conversations', { headers: { 'Authorization': `Bearer ${token}` } });
+        const conversations = await res.json();
+        const list = document.getElementById('conversations-list');
+        list.innerHTML = '<div class="p-3 small text-muted text-uppercase">Log de Actividad</div>';
+        
+        conversations.forEach(conv => {
+            const item = document.createElement('div');
+            item.className = `chat-item p-3 d-flex align-items-center`;
+            item.onclick = () => {
+                selectedUser = { id: conv.userInfo._id, name: conv.userInfo.nickname, img: conv.userInfo.photo };
+                goToChat();
+            };
+            item.innerHTML = `
+                <img src="${conv.userInfo.photo}" style="width:40px; height:40px; border-radius:50%; margin-right:10px; object-fit:cover; border: 1px solid #333;">
+                <div style="flex-grow:1; overflow:hidden">
+                    <div class="small fw-bold text-white">${conv.userInfo.nickname}</div>
+                    <div class="small text-muted text-truncate">${conv.lastMessage}</div>
+                </div>`;
+            list.appendChild(item);
+        });
+    }
+
+    async function goToChat() {
+        document.getElementById('profileModal').style.display = 'none';
+        showView('chat-view');
+        document.getElementById('chat-header').innerText = `MONITOREANDO: ${selectedUser.name}`;
+        const res = await fetch(`/api/messages/${selectedUser.id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const messages = await res.json();
+        const container = document.getElementById('chat-messages');
+        container.innerHTML = '';
+        messages.forEach(m => appendMessage(m.text, m.sender === myUser.id ? 'sent' : 'received'));
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('chat-input');
+        if (!input.value.trim() || !selectedUser) return;
+        socket.emit('private_message', { from: myUser.id, to: selectedUser.id, text: `[ADMIN]: ${input.value}` });
+        appendMessage(input.value, 'sent');
+        input.value = '';
+    }
+
+    function appendMessage(t, type) {
+        const container = document.getElementById('chat-messages');
+        const msg = document.createElement('div');
+        msg.className = `msg-bubble msg-${type}`;
+        msg.innerText = t;
+        container.appendChild(msg);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    syncMyProfile();
+    loadNearby();
+</script>
+</body>
+</html>

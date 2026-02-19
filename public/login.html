@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAMPER | Acceso</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #050505;
+            --card: #0f0f0f;
+            --accent: #ff0040;
+            --text: #ffffff;
+            --input-border: #1a1a1a;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #110005 0%, #050505 100%);
+        }
+
+        .login-box {
+            background: var(--card);
+            padding: 3rem;
+            border: 1px solid var(--input-border);
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+
+        /* Contenedor para alinear VAMPER y la Luna */
+        .brand-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            letter-spacing: 8px;
+            margin: 0;
+            color: var(--text);
+            font-weight: 800;
+        }
+
+        /* Estilo de Luna Plateada/Gris con textura */
+        .moon-icon {
+            font-size: 1.7rem;
+            /* El filtro convierte el emoji amarillo en uno gris plateado */
+            filter: grayscale(100%) brightness(1.2) drop-shadow(0 0 5px rgba(255, 255, 255, 0.2));
+            user-select: none;
+            line-height: 1;
+        }
+
+        .subtitle {
+            font-size: 0.6rem;
+            letter-spacing: 3px;
+            color: var(--accent);
+            margin-bottom: 2.5rem;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 1rem;
+            background: #111;
+            border: 1px solid var(--input-border);
+            color: white;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        .input-field:focus {
+            border-color: var(--accent);
+            background: #151515;
+            box-shadow: 0 0 10px rgba(255, 0, 64, 0.1);
+        }
+
+        .btn-vamped {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            font-weight: bold;
+            cursor: pointer;
+            letter-spacing: 2px;
+            transition: 0.3s;
+            text-transform: uppercase;
+            margin-top: 1rem;
+        }
+
+        .btn-vamped:hover {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 0 20px rgba(255, 0, 64, 0.4);
+        }
+
+        .register-link {
+            display: block;
+            margin-top: 2rem;
+            font-size: 0.7rem;
+            color: #666;
+            text-decoration: none;
+            letter-spacing: 1px;
+            transition: 0.3s;
+        }
+
+        .register-link span {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .register-link:hover {
+            color: white;
+        }
+
+        #error-msg {
+            color: var(--accent);
+            font-size: 0.7rem;
+            margin-top: 1.5rem;
+            min-height: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-box">
+        <div class="brand-container">
+            <h2>VAMPER</h2>
+            <span class="moon-icon">🌕</span>
+        </div>
+        
+        <p class="subtitle">Everything you want </p>
+        
+        <form id="vampedLoginForm">
+            <input type="email" id="email" class="input-field" placeholder="EMAIL" required>
+            <input type="password" id="password" class="input-field" placeholder="PASSWORD" required>
+            <button type="submit" class="btn-vamped">ACCEDER</button>
+        </form>
+
+        <a href="/register.html" class="register-link">
+            ¿NO TIENES CUENTA? <span>CREA TU PERFIL AQUÍ</span>
+        </a>
+
+        <div id="error-msg"></div>
+    </div>
+
+    <script>
+        const errorMsg = document.getElementById('error-msg');
+
+        document.getElementById('vampedLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.style.color = "white";
+            errorMsg.innerText = "VERIFICANDO CREDENCIALES...";
+
+            const payload = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('vamped_token', data.token);
+                    localStorage.setItem('vamped_user', JSON.stringify(data.user));
+                    
+                    errorMsg.style.color = "#00ff88";
+                    errorMsg.innerText = "ACCESO CONCEDIDO...";
+
+                    setTimeout(() => {
+                        window.location.href = data.redirect; 
+                    }, 800);
+                    
+                } else {
+                    errorMsg.style.color = "var(--accent)";
+                    errorMsg.innerText = data.msg || "ERROR DE ACCESO";
+                }
+            } catch (err) {
+                errorMsg.style.color = "var(--accent)";
+                errorMsg.innerText = "ERROR DE CONEXIÓN";
+            }
+        });
+
+        localStorage.removeItem('vamped_token');
+        localStorage.removeItem('vamped_user');
+    </script>
+</body>
+</html>

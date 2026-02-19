@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAMPER</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root { --bg: #050505; --card: #0f0f0f; --accent: #ff0040; --border: #1a1a1a; --service: #00d4ff; --online: #00ffcc; --offline: #666; }
+        body { background-color: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
+        
+        .navbar { background: rgba(5,5,5,0.98); border-bottom: 1px solid var(--border); height: 70px; z-index: 1000; }
+        .view-section { display: none; height: calc(100vh - 70px); overflow-y: auto; }
+        .active-view { display: block; }
+        
+        /* Dropdown Estilo Vamped */
+        .dropdown-menu-vamped { 
+            background: #0f0f0f !important; 
+            border: 1px solid var(--border) !important; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .dropdown-item-vamped { color: white !important; font-size: 0.9rem; padding: 10px 20px; }
+        .dropdown-item-vamped:hover { background: #1a1a1a !important; color: var(--accent) !important; }
+
+        /* Grid de Usuarios */
+        .user-card { position: relative; aspect-ratio: 1/1; background: var(--card); border: 1px solid var(--border); cursor: pointer; overflow: hidden; }
+        .user-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        .user-card:hover img { transform: scale(1.05); }
+
+        .user-info-tag {
+            position: absolute; bottom: 0; padding: 8px; width: 100%;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
+        }
+        .user-name { font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+        
+        .online-dot { 
+            width: 8px; height: 8px; background: var(--online); border-radius: 50%; 
+            box-shadow: 0 0 8px var(--online), 0 0 12px var(--online);
+            display: inline-block;
+        }
+
+        .time-text { font-size: 0.65rem; color: var(--offline); display: block; margin-bottom: 2px; }
+        .user-status-text { 
+            color: var(--service); font-size: 0.65rem; font-weight: normal; 
+            text-transform: uppercase; letter-spacing: 0.5px; display: block;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            opacity: 0.9;
+        }
+
+        /* Chat UI */
+        .chat-sidebar { background: #080808; border-right: 1px solid var(--border); overflow-y: auto; }
+        .chat-item { cursor: pointer; border-left: 3px solid transparent; transition: 0.2s; border-bottom: 1px solid #111; }
+        .chat-item:hover { background: #1a1a1a; }
+        .chat-item.active { background: #151515; border-left-color: var(--accent); }
+        .chat-messages { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; background: #050505; height: 100%; }
+        .msg-bubble { padding: 8px 15px; border-radius: 18px; max-width: 80%; margin-bottom: 10px; word-wrap: break-word; font-size: 0.95rem; }
+        .msg-sent { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 2px; }
+        .msg-received { align-self: flex-start; background: #262626; color: #e0e0e0; border-bottom-left-radius: 2px; }
+        
+        /* Modales Estilo Vamped */
+        .vamped-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-content-vamped { background: #0f0f0f; border: 1px solid var(--accent); width: 90%; max-width: 350px; padding: 20px; border-radius: 15px; box-shadow: 0 0 30px rgba(255, 0, 64, 0.2); }
+        .slider-container { position: relative; width: 100%; aspect-ratio: 1/1; margin-bottom: 15px; border-radius: 5px; overflow: hidden; }
+        #modalImg { width: 100%; height: 100%; object-fit: cover; }
+
+        .vamped-input-dark {
+            background: #1a1a1a; border: 1px solid var(--border); color: white;
+            padding: 12px; width: 100%; border-radius: 8px; margin-bottom: 15px; outline: none;
+        }
+        .vamped-input-dark:focus { border-color: var(--service); }
+
+        #myCurrentStatusDisplay {
+            font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+            max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar px-3 d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-3">
+        <strong style="letter-spacing:4px; cursor:pointer; color: var(--accent); font-size: 1.2rem;" onclick="showView('radar-view')">VAMPER</strong>
+        <i class="bi bi-chat-dots fs-4" style="cursor:pointer" onclick="showView('chat-view')"></i>
+        
+        <div class="d-flex align-items-center gap-2" style="cursor:pointer" onclick="openStatusModal()">
+            <i class="bi bi-clock-history fs-4" style="color: var(--service);"></i>
+            <span id="myCurrentStatusDisplay" style="color: var(--service);"></span>
+        </div>
+
+        <div class="d-flex align-items-center ms-1" style="cursor:pointer" onclick="openGalleryModal()">
+            <i class="bi bi-camera-fill fs-4" style="color: var(--accent); filter: drop-shadow(0 0 5px var(--accent));"></i>
+        </div>
+    </div>
+    
+    <div class="d-flex align-items-center gap-3">
+        <button class="btn btn-danger rounded-circle" onclick="saveNewStatus()" title="Actualizar Estado" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-arrow-clockwise" style="font-size: 1.2rem;"></i>
+        </button>
+        <div class="dropdown">
+            <img id="myProfilePic" src="" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" 
+                 style="width:38px; height:38px; border-radius:50%; border:2px solid var(--accent); cursor:pointer; display:none; object-fit: cover;">
+            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-vamped">
+                <li><a class="dropdown-item dropdown-item-vamped" href="#" onclick="openEditModal()">
+                    <i class="bi bi-person-gear me-2"></i>Editar Perfil</a>
+                </li>
+                <li><hr class="dropdown-divider border-secondary"></li>
+                <li><a class="dropdown-item dropdown-item-vamped text-danger" href="#" onclick="logout()">
+                    <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div id="statusUpdateModal" class="vamped-modal-overlay" onclick="closeStatusModal()">
+    <div class="modal-content-vamped text-center" onclick="event.stopPropagation()">
+        <i class="bi bi-clock-history fs-2 mb-2" style="color: var(--service);"></i>
+        <h5 class="mb-3">MI ESTADO ACTUAL</h5>
+        <input type="text" id="statusInput" class="vamped-input-dark" placeholder="¿Qué estás haciendo?..." maxlength="45">
+        <div class="d-grid gap-2">
+            <button class="btn btn-danger fw-bold" onclick="saveNewStatus()">ACTUALIZAR</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="closeStatusModal()">CANCELAR</button>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+<div id="editModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; overflow-y:auto; padding:20px;">
+    
+    <div style="max-width: 500px; margin: 40px auto; background: #0f0f0f; border: 1px solid var(--accent); padding: 30px; border-radius: 15px; position: relative; box-shadow: 0 0 20px rgba(255, 0, 64, 0.2);">
+        
+        <span onclick="cerrarModal()" style="position:absolute; top:15px; right:20px; color:var(--accent); cursor:pointer; font-weight:bold; font-size:1.8rem;">&times;</span>
+        
+        <h2 style="color: white; letter-spacing: 2px; margin-bottom: 5px;">MI PERFIL</h2>
+        <p style="color: #666; font-size: 0.9rem; margin-bottom: 30px;">Actualiza tu identidad</p>
+
+        <form id="editForm">
+            <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 25px;">
+                <div style="width: 130px; height: 130px; border-radius: 50%; border: 2px solid var(--accent); position: relative; overflow: hidden; background: #000; box-shadow: 0 0 15px rgba(255, 0, 64, 0.3);">
+                    <img id="edit-p-prev" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                </div>
+                <label for="edit-photo-upload" style="margin-top: 15px; background: #1a1a1a; color: white; padding: 8px 20px; border-radius: 20px; cursor: pointer; border: 1px solid #333; font-size: 0.8rem;">
+                    <i class="bi bi-camera me-2"></i>Cambiar Foto
+                </label>
+                <input id="edit-photo-upload" type="file" accept="image/*" style="display: none;">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label small text-muted text-uppercase">Nickname</label>
+                <input type="text" id="edit-nickname" class="vamped-input-dark" placeholder="Tu nombre en las sombras" style="margin-bottom: 10px;">
+            </div>
+
+            <div id="edit-personal-fields" class="hidden mb-3">
+                <label class="form-label small text-muted text-uppercase">Estado actual</label>
+                <input type="text" id="edit-status" class="vamped-input-dark" placeholder="¿Qué estás haciendo?">
+            </div>
+
+            <div id="edit-service-fields" class="hidden mb-3">
+                <label class="form-label small text-muted text-uppercase">Descripción del Servicio</label>
+                <textarea id="edit-description" class="vamped-input-dark" style="height: 100px; resize: none;"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-danger w-100 fw-bold py-3" style="border-radius: 10px; letter-spacing: 1px;">
+                GUARDAR CAMBIOS
+            </button>
+            
+            <div id="edit-msg" style="text-align: center; margin-top: 15px; font-size: 0.75rem; font-weight: bold;"></div>
+        </form>
+    </div>
+</div>
+
+
+<Style>
+.vamped-input-dark {
+    background: #1a1a1a !important;
+    border: 1px solid #333 !important;
+    color: white !important;
+    padding: 12px;
+    width: 100%;
+    border-radius: 8px;
+    outline: none;
+    transition: 0.3s;
+}
+
+.vamped-input-dark:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 10px rgba(255, 0, 64, 0.1);
+}
+
+.hidden { display: none; }
+
+</Style>
+
+
+<div id="galleryModal" class="vamped-modal-overlay" onclick="closeGalleryModal()">
+    <div class="modal-content-vamped" onclick="event.stopPropagation()" style="max-width: 400px; border-color: var(--accent);">
+        
+        <div style="background: rgba(255, 0, 64, 0.05); border: 1px solid rgba(255, 0, 64, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 20px;">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-shield-slash-fill" style="color: var(--accent); font-size: 1.2rem;"></i>
+                <strong style="font-size: 0.75rem; letter-spacing: 1px; color: var(--accent);">AVISO DE SEGURIDAD</strong>
+            </div>
+            <p style="font-size: 0.7rem; line-height: 1.3; color: #bbb; margin: 0; text-align: justify;">
+                Ten mucho cuidado a quién le das acceso a tu galería de fotos, sobre todo si muestras tu rostro. 
+                <strong>Verifica la identidad</strong> de la otra persona antes de compartir contenido o datos personales. 
+                En VAMPER, el pseudo-anonimato es tu principal herramienta para conocer gente de forma segura y discreta.
+            </p>
+        </div>
+
+        <h5 class="text-center mb-3" style="letter-spacing: 2px; font-size: 0.9rem; color: white;">Galeria</h5>
+        
+        <div class="d-flex justify-content-between gap-2 mb-4">
+            <div class="gallery-slot" onclick="document.getElementById('file-1').click()">
+                <input type="file" id="file-1" accept="image/*" hidden onchange="previewGallery(this, 'prev-1')">
+                <img id="prev-1" src="" style="display:none; width:100%; height:100%; object-fit:cover;">
+                <i class="bi bi-camera" id="icon-1"></i>
+            </div>
+            <div class="gallery-slot" onclick="document.getElementById('file-2').click()">
+                <input type="file" id="file-2" accept="image/*" hidden onchange="previewGallery(this, 'prev-2')">
+                <img id="prev-2" src="" style="display:none; width:100%; height:100%; object-fit:cover;">
+                <i class="bi bi-camera" id="icon-2"></i>
+            </div>
+            <div class="gallery-slot" onclick="document.getElementById('file-3').click()">
+                <input type="file" id="file-3" accept="image/*" hidden onchange="previewGallery(this, 'prev-3')">
+                <img id="prev-3" src="" style="display:none; width:100%; height:100%; object-fit:cover;">
+                <i class="bi bi-camera" id="icon-3"></i>
+            </div>
+        </div>
+
+        <div class="d-grid gap-2">
+            <button class="btn btn-danger fw-bold py-2" onclick="saveGallery()">GUARDAR GALERÍA</button>
+            <button class="btn btn-link btn-sm text-muted text-decoration-none" onclick="closeGalleryModal()">CERRAR</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .gallery-slot {
+        width: 100px;
+        height: 100px;
+        background: #1a1a1a;
+        border: 1px dashed var(--accent);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: 0.3s;
+    }
+    .gallery-slot:hover {
+        background: #222;
+        border-style: solid;
+        box-shadow: 0 0 10px rgba(255, 0, 64, 0.2);
+    }
+    .gallery-slot i {
+        font-size: 1.5rem;
+        color: var(--accent);
+    }
+</style>
+
+
+
+
+
+
+
+
+
+
+<script>
+
+
+    function openGalleryModal() {
+    document.getElementById('galleryModal').style.display = 'flex';
+}
+
+function closeGalleryModal() {
+    document.getElementById('galleryModal').style.display = 'none';
+}
+
+// Función para previsualizar la foto antes de subirla
+function previewGallery(input, imgId) {
+    const file = input.files[0];
+    const iconId = 'icon-' + imgId.split('-')[1];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = document.getElementById(imgId);
+            const icon = document.getElementById(iconId);
+            img.src = e.target.result;
+            img.style.display = 'block';
+            icon.style.display = 'none'; // Esconde el icono de cámara
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+// Función para enviar las 3 fotos al servidor (puedes adaptarla a tu API)
+async function saveGallery() {
+    const btn = event.target;
+    btn.innerText = "SUBIENDO...";
+    
+    // Aquí recolectarías los Base64 de las imágenes prev-1, prev-2, prev-3
+    // y los enviarías a tu ruta de /api/user/update o una nueva /api/user/gallery
+    
+    setTimeout(() => {
+        alert("¡Galería actualizada con éxito!");
+        btn.innerText = "GUARDAR GALERÍA";
+        closeGalleryModal();
+    }, 1500);
+}
+
+
+
+let nuevaImagenBase64 = "";
+async function openEditModal() {
+    const modal = document.getElementById('editModal');
+    // CORRECCIÓN: Usa 'vamped_token' para que coincida con el resto de tu app
+    const token = localStorage.getItem('vamped_token'); 
+    const msg = document.getElementById('edit-msg');
+    if(msg) msg.innerText = "";
+    
+    modal.style.display = 'block';
+
+    try {
+        const res = await fetch('/api/user/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        // Verificamos si la respuesta es exitosa antes de procesar
+        if (!res.ok) throw new Error("Error en la autenticación");
+
+        const user = await res.json();
+
+        // Rellenar campos
+        document.getElementById('edit-nickname').value = user.nickname || "";
+        
+        // Cargar imagen
+        const imgPrev = document.getElementById('edit-p-prev');
+        if (user.photo) {
+            imgPrev.src = user.photo; // Asigna la URL o Base64 del back
+            imgPrev.style.display = 'block'; // Asegura que sea visible
+        }
+
+        // Lógica de campos según tipo de cuenta
+        const serviceFields = document.getElementById('edit-service-fields');
+        const personalFields = document.getElementById('edit-personal-fields');
+
+        if (user.accountType === 'servicio') {
+            serviceFields.classList.remove('hidden');
+            personalFields.classList.add('hidden');
+            document.getElementById('edit-description').value = user.description || "";
+        } else {
+            personalFields.classList.remove('hidden');
+            serviceFields.classList.add('hidden');
+            document.getElementById('edit-status').value = user.status || "";
+        }
+
+    } catch (err) {
+        console.error("Error al obtener datos del usuario:", err);
+        if(msg) msg.innerText = "SESIÓN EXPIRADA O ERROR DE RED";
+    }
+}
+function cerrarModal() {
+    document.getElementById('editModal').style.display = 'none';
+    nuevaImagenBase64 = ""; // Resetear preview temporal
+}
+
+// Previsualización de nueva imagen
+document.getElementById('edit-photo-upload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            nuevaImagenBase64 = event.target.result;
+            const img = document.getElementById('edit-p-prev');
+            img.src = nuevaImagenBase64;
+            img.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Enviar formulario corregido
+document.getElementById('editForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // CORRECCIÓN: Usar 'vamped_token' que es el que definiste globalmente
+    const token = localStorage.getItem('vamped_token'); 
+    const msg = document.getElementById('edit-msg');
+    
+    msg.style.color = "white";
+    msg.innerText = "PROCESANDO CAMBIOS...";
+
+    // Capturamos los valores, manejando si los campos están ocultos (null)
+    const nickname = document.getElementById('edit-nickname').value;
+    const statusField = document.getElementById('edit-status');
+    const descField = document.getElementById('edit-description');
+
+    const datosUpdate = {
+        nickname: nickname,
+        status: statusField ? statusField.value : "",
+        description: descField ? descField.value : ""
+    };
+
+    if (nuevaImagenBase64) {
+        datosUpdate.photo = nuevaImagenBase64;
+    }
+
+    try {
+        const res = await fetch('/api/user/update', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // Se envía al middleware 'protect'
+            },
+            body: JSON.stringify(datosUpdate)
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            
+            // Opcional: Actualizar el objeto local para que los cambios sean inmediatos
+            let myUser = JSON.parse(localStorage.getItem('vamped_user')) || {};
+            myUser.nickname = data.nickname;
+            myUser.photo = data.photo;
+            localStorage.setItem('vamped_user', JSON.stringify(myUser));
+
+            msg.style.color = "#00ff88";
+            msg.innerText = "PERFIL ACTUALIZADO";
+            
+            setTimeout(() => {
+                cerrarModal();
+                window.location.reload(); 
+            }, 1500);
+        } else {
+            const errorRes = await res.json();
+            msg.style.color = "var(--accent)";
+            msg.innerText = errorRes.msg || "ERROR AL ACTUALIZAR";
+        }
+    } catch (err) {
+        msg.innerText = "ERROR DE CONEXIÓN";
+        console.error("Error en update:", err);
+    }
+});
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="radar-view" class="view-section active-view container-fluid p-2">
+    <div class="row g-1 row-cols-2 row-cols-md-4 row-cols-lg-6" id="main-grid"></div>
+</div>
+
+<div id="chat-view" class="view-section container-fluid g-0">
+    <div class="row h-100 g-0">
+        <div class="col-4 col-md-3 chat-sidebar" id="conversations-list"></div>
+        <div class="col-8 col-md-9 d-flex flex-column">
+            <div id="chat-header" class="p-3 border-bottom border-dark small fw-bold text-uppercase" style="background: #080808;">Panel de Monitoreo</div>
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="p-3 border-top border-dark" style="background: #080808;">
+                <div class="input-group">
+                    <input type="text" id="chat-input" class="form-control bg-transparent text-white border-secondary" placeholder="Mensaje ADMIN...">
+                    <button class="btn btn-danger" onclick="sendMessage()">ENVIAR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="profileModal" class="vamped-modal-overlay" onclick="this.style.display='none'">
+    <div class="modal-content-vamped text-center" onclick="event.stopPropagation()">
+        <div class="slider-container"><img id="modalImg" src=""></div>
+        <h5 id="modalName" class="mb-0"></h5>
+        <div id="modalTime" class="time-text mb-1"></div>
+        <div id="modalStatusDisplay" class="small mb-2" style="color: var(--service); font-style: italic;"></div>
+        <p id="modalDesc" class="small text-muted mb-3"></p>
+        <div class="d-grid gap-2">
+            <button class="btn btn-danger" onclick="goToChat()">CHAT</button>
+            <button id="btnAlbum" class="btn btn-warning fw-bold text-dark" onclick="alert('Abriendo Álbum...')">
+                <i class="bi bi-images me-1"></i> VER ÁLBUM
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const socket = io();
+    const token = localStorage.getItem('vamped_token');
+    let myUser = JSON.parse(localStorage.getItem('vamped_user')) || {};
+    let selectedUser = null;
+    let nearbyUsers = [];
+
+
+// AÑADE ESTO:
+socket.on('connect', () => {
+    if (myUser && myUser.id) {
+        socket.emit('join', myUser.id);
+        console.log("Conectado y unido a la sala:", myUser.id);
+    }
+})
+
+
+    // --- LÓGICA DE ESTADO ---
+    function openStatusModal() {
+        document.getElementById('statusInput').value = myUser.status || "";
+        document.getElementById('statusUpdateModal').style.display = 'flex';
+    }
+    function closeStatusModal() { document.getElementById('statusUpdateModal').style.display = 'none'; }
+
+    async function saveNewStatus() {
+        const statusText = document.getElementById('statusInput').value;
+        try {
+            const res = await fetch('/api/user/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ status: statusText })
+            });
+            if (res.ok) {
+                const updatedData = await res.json();
+                myUser.status = updatedData.status;
+                localStorage.setItem('vamped_user', JSON.stringify(myUser));
+                document.getElementById('myCurrentStatusDisplay').innerText = updatedData.status || "";
+                closeStatusModal();
+                loadNearby(); 
+            }
+        } catch (e) { console.error(e); }
+    }
+
+  
+    async function updateFullProfile() {
+        const photo = document.getElementById('editPhotoInput').value;
+        const description = document.getElementById('editDescInput').value;
+        try {
+            const res = await fetch('/api/user/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ photo, description })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                myUser.photo = data.photo;
+                myUser.description = data.description;
+                localStorage.setItem('vamped_user', JSON.stringify(myUser));
+                document.getElementById('myProfilePic').src = data.photo || '';
+                closeEditModal();
+                loadNearby();
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    // --- FUNCIONES CORE ---
+    function getTimeAgo(date) {
+        if (!date) return "Desconectado";
+        const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+        if (seconds < 300) return "En línea";
+        if (seconds < 3600) return `Hace ${Math.floor(seconds / 60)} min`;
+        if (seconds < 86400) return `Hace ${Math.floor(seconds / 3600)} h`;
+        return `Hace ${Math.floor(seconds / 86400)} d`;
+    }
+
+    socket.on('new_message', (data) => {
+        if (selectedUser && (selectedUser.id === data.from || selectedUser.id === data.to)) {
+            appendMessage(data.text, data.from === myUser.id ? 'sent' : 'received');
+        }
+        loadConversations();
+    });
+
+    async function loadConversations() {
+        try {
+            const res = await fetch('/api/conversations', { headers: { 'Authorization': `Bearer ${token}` } });
+            const conversations = await res.json();
+            const list = document.getElementById('conversations-list');
+            list.innerHTML = '<div class="p-3 small text-muted text-uppercase">Log de Actividad</div>';
+            conversations.forEach(conv => {
+                const item = document.createElement('div');
+                item.className = `chat-item p-3 d-flex align-items-center ${selectedUser?.id === conv.userInfo._id ? 'active' : ''}`;
+                item.onclick = () => {
+                    selectedUser = { id: conv.userInfo._id, name: conv.userInfo.nickname };
+                    goToChat();
+                };
+                item.innerHTML = `
+                    <img src="${conv.userInfo.photo}" style="width:40px; height:40px; border-radius:50%; margin-right:10px; object-fit:cover;">
+                    <div style="flex-grow:1; overflow:hidden">
+                        <div class="small fw-bold text-white">${conv.userInfo.nickname}</div>
+                        <div class="small text-muted text-truncate">${conv.lastMessage}</div>
+                    </div>`;
+                list.appendChild(item);
+            });
+        } catch(e) { console.error(e); }
+    }
+
+    async function goToChat() {
+        if (!selectedUser) return;
+        document.getElementById('profileModal').style.display = 'none';
+        showView('chat-view');
+        document.getElementById('chat-header').innerText = `MONITOREANDO: ${selectedUser.name}`;
+        const res = await fetch(`/api/messages/${selectedUser.id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const messages = await res.json();
+        const container = document.getElementById('chat-messages');
+        container.innerHTML = '';
+        messages.forEach(m => appendMessage(m.text, m.sender === myUser.id ? 'sent' : 'received'));
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('chat-input');
+        if (!input.value.trim() || !selectedUser) return;
+        socket.emit('private_message', { from: myUser.id, to: selectedUser.id, text: `[ADMIN]: ${input.value}` });
+        appendMessage(input.value, 'sent');
+        input.value = '';
+    }
+
+    function appendMessage(t, type) {
+        const container = document.getElementById('chat-messages');
+        const msg = document.createElement('div');
+        msg.className = `msg-bubble msg-${type}`;
+        msg.innerText = t;
+        container.appendChild(msg);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    async function loadNearby() {
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const res = await fetch(`/api/nearby?lng=${pos.coords.longitude}&lat=${pos.coords.latitude}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            nearbyUsers = await res.json();
+            const grid = document.getElementById('main-grid');
+            grid.innerHTML = nearbyUsers.map((u, index) => {
+                const isService = u.accountType === 'servicio';
+                const timeAgo = getTimeAgo(u.lastSeen);
+                const isOnline = timeAgo === "En línea";
+                return `
+                <div class="col">
+                    <div class="user-card" onclick="openProfileByIndex(${index})">
+                        <img src="${u.photo || ''}">
+                        <div class="user-info-tag">
+                            <span class="user-name" style="color: ${isService ? 'var(--service)' : 'white'}">
+                                ${isOnline ? '<span class="online-dot"></span>' : ''}
+                                ${u.nickname}, ${u.age || ''}
+                            </span>
+                            <span class="time-text">${timeAgo}</span>
+                            <span class="user-status-text">${u.status || ''}</span>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        });
+    }
+
+    function openProfileByIndex(index) {
+        const u = nearbyUsers[index];
+        selectedUser = { id: u._id, name: u.nickname };
+        const timeAgo = getTimeAgo(u.lastSeen);
+        document.getElementById('modalImg').src = u.photo || '';
+        document.getElementById('modalName').innerText = `${u.nickname}, ${u.age || ''}`;
+        document.getElementById('modalTime').innerText = timeAgo;
+        document.getElementById('modalStatusDisplay').innerText = u.status ? `"${u.status}"` : "";
+        document.getElementById('modalDesc').innerText = u.description || "";
+        document.getElementById('modalTime').style.color = timeAgo === "En línea" ? "var(--online)" : "var(--offline)";
+   const btnAlbum = document.getElementById('btnAlbum');
+        if (u.accountType === 'servicio') {
+            btnAlbum.className = "btn btn-info fw-bold text-dark";
+            btnAlbum.innerHTML = '<i class="bi bi-lock-fill me-1"></i> VER CATÁLOGO'; // Se agregó bi-lock-fill
+        } else {
+            btnAlbum.className = "btn btn-warning fw-bold text-dark";
+            btnAlbum.innerHTML = '<i class="bi bi-lock-fill me-1"></i> FOTOS'; // Se agregó bi-lock-fill
+        }
+        document.getElementById('profileModal').style.display = 'flex';
+    }
+
+    function showView(v) { 
+        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active-view'));
+        document.getElementById(v).classList.add('active-view');
+        if(v === 'chat-view') loadConversations();
+    }
+
+ async function syncMyProfile() {
+    try {
+        const res = await fetch('/api/user/me', { 
+            headers: { 'Authorization': `Bearer ${token}` } 
+        });
+        const data = await res.json();
+        
+        if (res.ok) {
+            // Guardamos en memoria local
+            myUser = { 
+                id: data._id, 
+                nickname: data.nickname, 
+                photo: data.photo, 
+                status: data.status, 
+                description: data.description 
+            };
+            localStorage.setItem('vamped_user', JSON.stringify(myUser));
+
+            // 1. Cargamos la miniatura del Navbar
+            const navPic = document.getElementById('myProfilePic');
+            if (data.photo) {
+                navPic.src = data.photo;
+                navPic.style.display = 'block';
+            }
+
+            // 2. Cargamos el texto del estado en el Navbar
+            const statusDisplay = document.getElementById('myCurrentStatusDisplay');
+            if (statusDisplay) {
+                statusDisplay.innerText = data.status || "SIN ESTADO";
+            }
+        }
+    } catch (e) { 
+        console.error("Error sincronizando perfil:", e); 
+    }
+}
+
+// IMPORTANTE: Llama a la función al cargar la página
+syncMyProfile();
+    function logout() { localStorage.clear(); window.location.href = '/'; }
+
+    syncMyProfile();
+    loadNearby();
+</script>
+
+
+<div id="catalogModal" class="vamped-modal-overlay" onclick="this.style.display='none'">
+    <div class="modal-content-vamped" onclick="event.stopPropagation()" style="max-width: 400px; border-color: var(--service);">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 id="catTitle" class="mb-0 text-uppercase" style="letter-spacing: 2px; color: var(--service);">CATÁLOGO</h5>
+            <span class="online-dot"></span>
+        </div>
+        
+        <div id="catHorario" class="time-text mb-3" style="color: var(--online);"></div>
+
+        <div id="catItemsContainer" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;">
+            </div>
+
+        <div class="d-grid gap-2">
+            <button id="catWabtn" class="btn btn-success fw-bold">
+                <i class="bi bi-whatsapp me-2"></i>PEDIR AL WHATSAPP
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('catalogModal').style.display='none'">CERRAR</button>
+        </div>
+    </div>
+</div>
+
+
+<style>
+    
+
+    .cat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #1a1a1a;
+}
+.cat-item-info b { font-size: 0.9rem; color: #fff; display: block; }
+.cat-item-info span { font-size: 0.75rem; color: #666; }
+.cat-item-price { color: var(--accent); font-weight: bold; font-family: 'Courier New', monospace; }
+
+
+</style>
+
+<script>
+    
+    function openProfileByIndex(index) {
+    const u = nearbyUsers[index];
+    if (!u) return;
+
+    selectedUser = { id: u._id, name: u.nickname };
+    const timeAgo = getTimeAgo(u.lastSeen);
+    
+    // 1. Rellenar la previsualización (Modal de Perfil)
+    document.getElementById('modalImg').src = u.photo || '';
+    document.getElementById('modalName').innerText = `${u.nickname}, ${u.age || ''}`;
+    document.getElementById('modalTime').innerText = timeAgo;
+    document.getElementById('modalStatusDisplay').innerText = u.status ? `"${u.status}"` : "";
+    document.getElementById('modalDesc').innerText = u.description || "";
+    
+    const timeDisplay = document.getElementById('modalTime');
+    timeDisplay.style.color = timeAgo === "En línea" ? "var(--online)" : "var(--offline)";
+
+    // 2. Configurar el botón dinámico (Álbum o Catálogo)
+    const btnAlbum = document.getElementById('btnAlbum');
+    
+    // Limpiamos cualquier onclick previo para que no se dupliquen eventos
+    btnAlbum.onclick = null; 
+
+    if (u.accountType === 'servicio') {
+        btnAlbum.className = "btn btn-info fw-bold text-dark w-100";
+        btnAlbum.innerHTML = '<i class="bi bi-journal-text me-1"></i> VER CATÁLOGO';
+        
+        // Al hacer clic, llama a la función del catálogo pasando el nombre
+        btnAlbum.onclick = (e) => {
+            e.stopPropagation(); // Evita que el click cierre el modal por error
+            verCatalogo(u.nickname);
+        };
+    } else {
+        btnAlbum.className = "btn btn-warning fw-bold text-dark w-100";
+        btnAlbum.innerHTML = '<i class="bi bi-images me-1"></i> FOTOS';
+        btnAlbum.onclick = () => alert('Álbum privado de ' + u.nickname);
+    }
+
+    // 3. Mostrar el modal de perfil
+    document.getElementById('profileModal').style.display = 'flex';
+}
+
+
+// --- FUNCIONES GLOBALES (Ponlas fuera de todo) ---
+
+async function verCatalogo(nombreServicio) {
+    console.log("Cargando catálogo para:", nombreServicio);
+    try {
+        const res = await fetch(`/api/catalogo/${encodeURIComponent(nombreServicio)}`);
+        if (!res.ok) throw new Error("No se encontró el catálogo");
+        
+        const data = await res.json();
+
+        // Rellenar el modal del catálogo
+        document.getElementById('catTitle').innerText = data.servicio;
+        document.getElementById('catHorario').innerText = `Horario: ${data.horario}`;
+        
+        const container = document.getElementById('catItemsContainer');
+        container.innerHTML = data.catalogo.map(item => `
+            <div class="cat-item">
+                <div class="cat-item-info">
+                    <b>${item.nombre}</b>
+                    <span style="font-size:0.7rem; color:#888;">${item.desc || ''}</span>
+                </div>
+                <div class="cat-item-price">$${item.precio.toLocaleString()}</div>
+            </div>
+        `).join('');
+
+        // Cambiar visibilidad de modales
+        document.getElementById('profileModal').style.display = 'none';
+        document.getElementById('catalogModal').style.display = 'flex';
+
+    } catch (err) {
+        console.error(err);
+        alert("Este servicio no tiene catálogo disponible todavía.");
+    }
+}
+
+// ... aquí sigue el resto de tu código (socket, openProfileByIndex, etc.)
+
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "horario": "Abierto 24/7 - Reparto toda la noche",
+  "telefono": "56912345678",
+  "catalogo": [
+    {
+      "nombre": "Pack Pisco Mistral 35°",
+      "desc": "Botella 750cc + Coca Cola 1.5L + Bolsa de hielo 1kg.",
+      "precio": 12500
+    },
+    {
+      "nombre": "Promo Whisky Johnnie Walker Red",
+      "desc": "Etiqueta Roja 750cc + 2 Bebidas lata + Hielo.",
+      "precio": 18900
+    },
+    {
+      "nombre": "Pack Cerveza Corona (6u)",
+      "desc": "Seis botellas de 330cc, extra frías.",
+      "precio": 8500
+    },
+    {
+      "nombre": "Vino Gato Negro Cabernet",
+      "desc": "Botella 750cc (Ideal para la previa).",
+      "precio": 3800
+    },
+    {
+      "nombre": "Cajetilla Lucky Strike (20u)",
+      "desc": "Convertibles (Menta/Berry) según stock.",
+      "precio": 5800
+    },
+    {
+      "nombre": "Papas Lays Tarro XL",
+      "desc": "Papas fritas en tarro para picar.",
+      "precio": 3200
+    }
+  ]
+}
