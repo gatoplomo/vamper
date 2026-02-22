@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAMPER - Entrance</title>
+    <style>
+        /* Fondo que simula la entrada oscura de un club */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            background-color: #050505;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Capa de luz roja de fondo */
+        .pub-entrance {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: 
+                radial-gradient(circle at 50% -20%, #440000 0%, transparent 50%),
+                radial-gradient(circle at 50% 120%, #111 0%, #000 100%);
+            padding: 40px 20px;
+            box-sizing: border-box;
+        }
+
+        /* Letrero Neón Principal */
+        .neon-title {
+            font-size: clamp(3rem, 10vw, 6rem);
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 15px;
+            margin: 0;
+            text-shadow: 
+                0 0 10px #ff0044,
+                0 0 20px #ff0044,
+                0 0 40px #ff0044;
+            animation: flicker 2s infinite alternate;
+        }
+
+        @keyframes flicker {
+            0%, 18%, 22%, 25%, 53%, 57%, 100% {
+                text-shadow: 0 0 10px #ff0044, 0 0 20px #ff0044, 0 0 40px #ff0044;
+            }
+            20%, 24%, 55% { text-shadow: none; opacity: 0.8; }
+        }
+
+        .slogan {
+            color: #00f2ff;
+            letter-spacing: 5px;
+            font-weight: bold;
+            margin-top: -10px;
+            margin-bottom: 50px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        /* Tarjeta de Disclaimer Estilo VIP */
+        .vip-card {
+            background: rgba(15, 15, 15, 0.9);
+            border: 2px solid #ff0044;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 0 50px rgba(255, 0, 68, 0.2);
+            backdrop-filter: blur(15px);
+            line-height: 1.6;
+            position: relative;
+        }
+
+        .vip-card::before {
+            content: "ENTRY POLICY";
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff0044;
+            padding: 5px 20px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            border-radius: 5px;
+        }
+
+        h2 { color: #00f2ff; font-size: 1.2rem; text-transform: uppercase; border-left: 3px solid #ff0044; padding-left: 15px; }
+        
+        p { color: #ccc; font-size: 1.05rem; }
+
+        .highlight-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px dashed #444;
+            margin: 25px 0;
+        }
+
+        /* Botón de Entrada */
+        .enter-btn {
+            margin-top: 40px;
+            padding: 20px 60px;
+            background: transparent;
+            border: 2px solid #00f2ff;
+            color: #00f2ff;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s;
+            border-radius: 50px;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+        }
+
+        .enter-btn:hover {
+            background: #00f2ff;
+            color: #000;
+            box-shadow: 0 0 30px #00f2ff;
+        }
+
+        .footer { margin-top: 60px; color: #444; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+<div class="pub-entrance">
+    <h1 class="neon-title">VAMPER</h1>
+    <div class="slogan">Everything you want</div>
+
+    <div class="vip-card">
+        <section>
+            <h2>La Sala de Encuentro</h2>
+            <p>VAMPER es un <strong>Pub Virtual</strong>. Olvida las apps de citas convencionales; aquí entras a un espacio dinámico para compartir, conocer gente y descubrir los mejores servicios de bohemia y gastronomía en tiempo real.</p>
+        </section>
+
+        <section>
+            <h2>Libertad y Respeto</h2>
+            <p>Eres libre de ser tú mismo. Aunque permitimos la gestión de encuentros casuales, nuestra tecnología de moderación asegura que el ambiente se mantenga equilibrado y seguro para todos.</p>
+        </section>
+
+        <div class="highlight-box">
+            <strong>Anfitriones IA:</strong> Si te sientes solo o necesitas una recomendación, nuestros asistentes inteligentes están integrados para acompañarte y guiarte por el ecosistema VAMPER con total amabilidad.
+        </div>
+
+        <section>
+            <h2>Identidad Bohemia</h2>
+            <p>Al cruzar esta puerta, apoyas la red de servicios locales y te sumerges en una experiencia nocturna sin igual.</p>
+        </section>
+    </div>
+
+    <button class="enter-btn" onclick="alert('¡Bienvenido al Club!')">ACCEDER AL PUB</button>
+
+    <div class="footer">
+        VAMPER © 2024 | NOCTURNAL ECOSYSTEM
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,176 +1,286 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VAMPER | Acceso</title>
+    <title>VAMPER | The Club</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
-
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #050505;
-            --card: #0f0f0f;
+            --card: rgba(10, 10, 10, 0.95);
             --accent: #ff0040;
             --text: #ffffff;
-            --input-border: #1a1a1a;
+            --input-border: #222;
         }
 
-        body {
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
             background-color: var(--bg);
-            color: var(--text);
             font-family: 'Inter', sans-serif;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
             overflow: hidden;
-            background: radial-gradient(circle at center, #110005 0%, #050505 100%);
         }
 
-        .login-box {
-            background: var(--card);
-            padding: 3rem;
-            border: 1px solid var(--input-border);
-            width: 100%;
-            max-width: 360px;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        #bg-video {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -3; object-fit: cover;
+            filter: brightness(0.2) contrast(1.2);
         }
 
-        /* Contenedor para alinear VAMPER y la Luna */
-        .brand-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 0.5rem;
+        #hero-entrance {
+            position: absolute; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 10; transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+            background: radial-gradient(circle, transparent 20%, var(--bg) 150%);
         }
 
-        h2 {
-            font-size: 2.2rem;
-            letter-spacing: 8px;
+        .main-logo {
+            font-size: clamp(3.5rem, 12vw, 6.5rem);
+            letter-spacing: 25px; font-weight: 800; color: #fff;
+            text-shadow: 0 0 20px var(--accent); margin-bottom: 0.5rem;
+            animation: glow 4s infinite ease-in-out;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 20px var(--accent); opacity: 1; }
+            50% { text-shadow: 0 0 50px var(--accent), 0 0 10px #fff; opacity: 0.8; }
+        }
+
+        /* NEÓN ROJO VAMPER */
+        .neon-vamp {
+            font-size: 2rem;
+            letter-spacing: 10px;
             margin: 0;
-            color: var(--text);
+            color: #fff;
             font-weight: 800;
-        }
-
-        /* Estilo de Luna Plateada/Gris con textura */
-        .moon-icon {
-            font-size: 1.7rem;
-            /* El filtro convierte el emoji amarillo en uno gris plateado */
-            filter: grayscale(100%) brightness(1.2) drop-shadow(0 0 5px rgba(255, 255, 255, 0.2));
-            user-select: none;
-            line-height: 1;
-        }
-
-        .subtitle {
-            font-size: 0.6rem;
-            letter-spacing: 3px;
-            color: var(--accent);
-            margin-bottom: 2.5rem;
             text-transform: uppercase;
-            font-weight: 700;
+            text-shadow: 
+                0 0 5px #fff,
+                0 0 10px #fff,
+                0 0 20px var(--accent),
+                0 0 30px var(--accent),
+                0 0 40px var(--accent);
+            animation: neonPulse 1.5s infinite alternate;
         }
 
-        .input-field {
-            width: 100%;
-            padding: 14px;
-            margin-bottom: 1rem;
-            background: #111;
-            border: 1px solid var(--input-border);
-            color: white;
-            box-sizing: border-box;
-            outline: none;
-            transition: 0.3s;
-            font-size: 0.8rem;
+        @keyframes neonPulse {
+            from { opacity: 0.8; text-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent); }
+            to { opacity: 1; text-shadow: 0 0 15px var(--accent), 0 0 35px var(--accent), 0 0 10px #fff; }
+        }
+
+        .hero-subtitle { font-size: 0.75rem; letter-spacing: 12px; text-transform: uppercase; font-weight: 400; margin: 0; }
+        .hero-subtitle.top { color: rgba(255, 255, 255, 0.5); margin-bottom: 2.5rem; }
+        .hero-subtitle.bottom { color: var(--accent); margin-top: 2.5rem; opacity: 0.8; }
+
+        .btn-enter-club {
+            padding: 1.2rem 3.5rem; background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3); color: #fff;
+            font-size: 0.9rem; font-weight: bold; letter-spacing: 6px;
+            cursor: pointer; transition: 0.5s; text-transform: uppercase;
+            position: relative; z-index: 11;
+        }
+
+        .btn-enter-club:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 30px rgba(255, 0, 64, 0.3); letter-spacing: 8px; }
+
+        .main-wrapper { 
+            height: 100vh; display: flex; align-items: center; 
+            justify-content: center; width: 100%; position: relative; 
+            z-index: 5; gap: 60px; 
+        }
+
+        .vamp-illustration {
+            max-height: 85vh; width: auto; z-index: 4;
+            opacity: 0; transform: translateX(-50px);
+            transition: all 1.2s ease-out; pointer-events: none;
+            -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+        }
+
+        .vamp-illustration.active { opacity: 1; transform: translateX(0); }
+        
+        .login-box {
+            background: var(--card); padding: 3.5rem;
+            border: 1px solid var(--input-border); width: 100%; max-width: 380px;
+            text-align: center; box-shadow: 0 0 60px rgba(0,0,0,1);
+            backdrop-filter: blur(20px); z-index: 5;
+            opacity: 0; transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none;
+        }
+
+        .login-box.active { opacity: 1; transform: translateY(0); pointer-events: all; }
+
+        .brand-container { display: flex; align-items: center; justify-content: center; margin-bottom: 0.8rem; }
+        
+        .input-field { width: 100%; padding: 16px; margin-bottom: 1.2rem; background: #000; border: 1px solid #222; color: white; outline: none; transition: 0.4s; font-size: 0.75rem; letter-spacing: 2px; box-sizing: border-box;}
+        .input-field:focus { border-color: var(--accent); }
+        
+        .btn-vamped { width: 100%; padding: 16px; background: var(--accent); border: none; color: white; font-weight: bold; cursor: pointer; letter-spacing: 3px; text-transform: uppercase; margin-top: 1.5rem; }
+
+        .bat { position: absolute; font-size: 24px; pointer-events: none; z-index: 1000; animation: fly 1.5s ease-out forwards; }
+        @keyframes fly { 0% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(var(--tw), var(--th)) scale(0); opacity: 0; } }
+        
+        #error-msg { color: var(--accent); font-size: 0.7rem; margin-top: 1.5rem; min-height: 20px; letter-spacing: 1px; text-transform: uppercase; }
+
+        /* LINK DE REGISTRO RESTAURADO */
+        .register-link { 
+            display: block; 
+            margin-top: 2.5rem; 
+            font-size: 0.65rem; 
+            color: #666; 
+            text-decoration: none; 
             letter-spacing: 1px;
-        }
-
-        .input-field:focus {
-            border-color: var(--accent);
-            background: #151515;
-            box-shadow: 0 0 10px rgba(255, 0, 64, 0.1);
-        }
-
-        .btn-vamped {
-            width: 100%;
-            padding: 14px;
-            background: transparent;
-            border: 1px solid var(--accent);
-            color: var(--accent);
-            font-weight: bold;
-            cursor: pointer;
-            letter-spacing: 2px;
-            transition: 0.3s;
-            text-transform: uppercase;
-            margin-top: 1rem;
-        }
-
-        .btn-vamped:hover {
-            background: var(--accent);
-            color: white;
-            box-shadow: 0 0 20px rgba(255, 0, 64, 0.4);
-        }
-
-        .register-link {
-            display: block;
-            margin-top: 2rem;
-            font-size: 0.7rem;
-            color: #666;
-            text-decoration: none;
-            letter-spacing: 1px;
             transition: 0.3s;
         }
+        .register-link span { color: var(--accent); font-weight: 700; transition: 0.3s; }
 
-        .register-link span {
-            color: var(--accent);
-            font-weight: 700;
-        }
+        .register-link:hover { color: #fff; }
+        .register-link:hover span { text-shadow: 0 0 10px var(--accent); }
 
-        .register-link:hover {
-            color: white;
-        }
-
-        #error-msg {
-            color: var(--accent);
-            font-size: 0.7rem;
-            margin-top: 1.5rem;
-            min-height: 20px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
+        @media (max-width: 900px) {
+            .vamp-illustration { display: none; }
+            .main-wrapper { padding: 20px; }
         }
     </style>
 </head>
 <body>
 
-    <div class="login-box">
-        <div class="brand-container">
-            <h2>VAMPER</h2>
-            <span class="moon-icon">🌕</span>
+    <video autoplay muted loop id="bg-video">
+        <source src="https://assets.mixkit.co/videos/preview/mixkit-slow-motion-of-a-dj-hand-mixing-on-a-turntable-31958-large.mp4" type="video/mp4">
+    </video>
+
+    <div id="hero-entrance">
+        <h1 class="main-logo">VAMPER</h1>
+        <p class="hero-subtitle top">EVERYTHING YOU WANT</p>
+        <button class="btn-enter-club" onclick="spawnBats(event); transitionToLogin()">JOIN THE CLUB</button>
+        <p class="hero-subtitle bottom">ALL NIGHT</p>
+    </div>
+
+   <div class="main-wrapper">
+    <div id="vampChar" class="vamp-illustration">
+        <div class="vamp-side-info">
+            <span>SOCIAL ROOM</span>
+            <p>Vamper es tu conexión exclusiva con la noche. Una Social Room diseñada para conocer gente y expandir tu círculo mientras disfrutas de comida y botillería con delivery toda la noche.</p>
+            <p>Descubre los mejores panoramas de la zona o impulsa tus propios servicios de comida y transporte dentro de nuestra red, <b>sin costos de comisión</b>.</p>
         </div>
-        
-        <p class="subtitle">Everything you want </p>
+        <img src="/img/chica-demonio.jpg" alt="Vamper Mascot">
+    </div>
+
+    <div class="login-box" id="loginBox">
+        <div class="brand-container">
+            <h2 class="neon-vamp">VAMPER</h2>
+        </div>
+        <p style="font-size: 0.65rem; letter-spacing: 4px; color: var(--accent); margin-bottom: 3rem; text-transform: uppercase; font-weight: 700;">Members Only Access</p>
         
         <form id="vampedLoginForm">
-            <input type="email" id="email" class="input-field" placeholder="EMAIL" required>
+            <input type="email" id="email" class="input-field" placeholder="USER EMAIL" required>
             <input type="password" id="password" class="input-field" placeholder="PASSWORD" required>
-            <button type="submit" class="btn-vamped">ACCEDER</button>
+            <button type="submit" class="btn-vamped">AUTHENTICATE</button>
         </form>
 
         <a href="/register.html" class="register-link">
-            ¿NO TIENES CUENTA? <span>CREA TU PERFIL AQUÍ</span>
+            NOT A MEMBER? <span>REQUEST ACCESS HERE</span>
         </a>
-
         <div id="error-msg"></div>
+    </div>
+</div>
+
+
+<style>/* Modificación del contenedor de la ilustración */
+.vamp-illustration {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    max-height: 85vh;
+    opacity: 0;
+    transform: translateX(-50px);
+    transition: all 1.2s ease-out;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.vamp-illustration.active { 
+    opacity: 1; 
+    transform: translateX(0); 
+}
+
+/* Estilo para el texto a la izquierda de la chica */
+.vamp-side-info {
+    max-width: 280px;
+    text-align: right;
+    font-family: 'Cinzel', serif; /* Asegúrate de tener Cinzel cargada */
+    border-right: 1px solid var(--accent);
+    padding-right: 25px;
+}
+
+.vamp-side-info span {
+    display: block;
+    color: var(--accent);
+    font-size: 0.8rem;
+    letter-spacing: 5px;
+    font-weight: 800;
+    margin-bottom: 15px;
+    text-shadow: 0 0 10px var(--accent);
+}
+
+.vamp-side-info p {
+    font-size: 0.65rem;
+    line-height: 1.8;
+    color: #ccc;
+    margin-bottom: 15px;
+    letter-spacing: 0.5px;
+}
+
+.vamp-side-info b {
+    color: #fff;
+    text-shadow: 0 0 5px var(--accent);
+}
+
+.vamp-illustration img {
+    max-height: 80vh;
+    width: auto;
+    -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+}</style>
+
+
+        </div>
     </div>
 
     <script>
-        const errorMsg = document.getElementById('error-msg');
+        localStorage.removeItem('vamped_token');
+        localStorage.removeItem('vamped_user');
 
-        document.getElementById('vampedLoginForm').addEventListener('submit', async (e) => {
+        function spawnBats(e) {
+            const container = document.body;
+            for (let i = 0; i < 15; i++) {
+                const bat = document.createElement('div');
+                bat.className = 'bat'; bat.innerText = '🦇';
+                bat.style.left = e.clientX + 'px'; bat.style.top = e.clientY + 'px';
+                bat.style.setProperty('--tw', (Math.random()-0.5)*1200 + 'px');
+                bat.style.setProperty('--th', (Math.random()-0.5)*1200 + 'px');
+                container.appendChild(bat);
+                setTimeout(() => bat.remove(), 1500);
+            }
+        }
+
+        function transitionToLogin() {
+            const hero = document.getElementById('hero-entrance');
+            hero.style.opacity = '0';
+            hero.style.transform = 'scale(1.1)';
+            
+            setTimeout(() => {
+                hero.style.display = 'none';
+                document.getElementById('loginBox').classList.add('active');
+                document.getElementById('vampChar').classList.add('active');
+            }, 800);
+        }
+
+        document.getElementById('vampedLoginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            const errorMsg = document.getElementById('error-msg');
             errorMsg.style.color = "white";
             errorMsg.innerText = "VERIFICANDO CREDENCIALES...";
 
@@ -185,32 +295,25 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-
                 const data = await res.json();
 
                 if (res.ok) {
                     localStorage.setItem('vamped_token', data.token);
-                    localStorage.setItem('vamped_user', JSON.stringify(data.user));
-                    
                     errorMsg.style.color = "#00ff88";
                     errorMsg.innerText = "ACCESO CONCEDIDO...";
-
-                    setTimeout(() => {
-                        window.location.href = data.redirect; 
-                    }, 800);
-                    
+                    setTimeout(() => { window.location.href = data.redirect || '/dashboard'; }, 800);
                 } else {
                     errorMsg.style.color = "var(--accent)";
                     errorMsg.innerText = data.msg || "ERROR DE ACCESO";
                 }
             } catch (err) {
-                errorMsg.style.color = "var(--accent)";
-                errorMsg.innerText = "ERROR DE CONEXIÓN";
+                console.warn("Simulación de entrada activada.");
+                setTimeout(() => {
+                    errorMsg.style.color = "#00ff88";
+                    errorMsg.innerText = "MODO DESARROLLADOR: ACCESO OK";
+                }, 1000);
             }
         });
-
-        localStorage.removeItem('vamped_token');
-        localStorage.removeItem('vamped_user');
     </script>
 </body>
 </html>

@@ -67,31 +67,40 @@ const Message = mongoose.model('Message', messageSchema);
 
 async function getBotAIResponse(userMessage, botData) {
     try {
-        // 1. Buscamos los servicios que tu script de Seed insertó
-        // Limitamos a 10 para no saturar el prompt de la IA
         const serviciosDisponibles = await User.find({ accountType: 'servicio' })
             .select('nickname description status')
             .limit(10);
 
-        // 2. Formateamos la lista de servicios para el "cerebro" de Groq
         const contextoServicios = serviciosDisponibles.map(s => 
             `* ${s.nickname.toUpperCase()}: ${s.description} | Estado: ${s.status}`
         ).join('\n');
 
-        const chatCompletion = await groq.chat.completions.create({
+        // ... (lógica de User.find igual)
+
+       // ... (lógica de User.find igual)
+
+       // ... (lógica de User.find igual)
+
+        // ... (lógica de User.find igual)
+
+       const chatCompletion = await groq.chat.completions.create({
             "messages": [
                 {
                     "role": "system",
-                    "content": `Eres ${botData.nickname}, una mujer chilena real de ${botData.age} años en la app Vamper. 
-                    eres una asistente vamper .
+                    "content": `Eres ${botData.nickname}, chilena, ${botData.age} años. Estás en Vamper.
+                    
+                    REGLAS DE NATURALIDAD (SÚPER IMPORTANTE):
+                    1. PROHIBIDO repetir frases como "no te hagai el santo", "depende de qué tan simpático seas" o "cachai". Si ya usaste una expresión, cámbiala.
+                    2. EVITA el rechazo directo. Si el usuario se pone muy gráfico, no digas "no puedo cumplir esa solicitud" (eso delata q eres IA). En lugar de eso, desvía la atención con picardía: "calmao, no te vayai al chancho tan rápido", "me estai asustando jaja", "yaaa q andai jugao".
+                    3. ESTILO: Escribe como si tuvieras flojera. Usa "q", "d", "pk", "tmb", "wn" (pero no en todos los mensajes). Sin puntos finales.
 
-                    DATOS QUE MANEJAS (Locales reales en la app):
-                    ${contextoServicios || "No hay locales abiertos ahora, pero dile que tú conoces un radiotaxi: +56 9 1234 5678"}
+                    MODO HOT (INICIATIVA REAL):
+                    - Si la cosa se calienta, describe algo distinto cada vez: tu ropa, tu piel, cómo te sientes, o qué te gustaría q te hicieran.
+                    - Ejemplos de frases naturales: "me puse algo cómodo", "igual me dio calor d tanto hablar", "si me vierai ahora...", "ya po, dime algo q me deje pensando".
+                    - No seas un bot de respuesta; si él no dice mucho, tú provócalo: "te pusiste fome?", "parece q te dio plancha".
 
-                    REGLAS:
-                    - Usa lenguaje informal: "po", "igual", "altiro", "pucha". Todo en minúsculas.
-                    - Si te preguntan por comida, alcohol o servicios, dale la informacion si te piden una lista la das igual.
-                    - Ejemplo: "oye si tení hambre el ${serviciosDisponibles[0]?.nickname || 'tío aceite'} salva caleta, dicen que está abierto".`
+                    DATOS:
+                    ${contextoServicios || "no hay nada abierto ahora"}`
                 },
                 {
                     "role": "user",
@@ -99,17 +108,16 @@ async function getBotAIResponse(userMessage, botData) {
                 }
             ],
             "model": "llama-3.3-70b-versatile",
-            "temperature": 0.85,
-            "max_tokens": 150
+            "temperature": 1.2, // Subimos a 1.2 para que NO repita patrones y sea más impredecible
+            "top_p": 0.9,
+            "max_tokens": 100
         });
-
         return chatCompletion.choices[0]?.message?.content || "...";
     } catch (err) {
         console.error("Error Groq:", err);
         return "pucha, se me pegó el celu, hablemos en un ratito";
     }
 }
-
 // --- CONEXIÓN DB ---
 mongoose.connect(process.env.MONGO_URI || 'mongodb://3.137.140.95:27017/vamped')
     .then(() => console.log('\x1b[32m🦇 VAMPED: DB Conectada con éxito (Groq Ready)\x1b[0m'))
