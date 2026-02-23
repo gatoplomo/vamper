@@ -1,0 +1,22 @@
+{
+  "serviceCategory": "comida",
+  "horario": "19:00 - 05:30 AM",
+  "telefono": "56912345678",
+  "catalogo": [
+    {
+      "nombre": "Completo Italiano XL",
+      "desc": "Palta natural, tomate picado, mayo casera y vienesa de 18cm.",
+      "precio": 3500
+    },
+    {
+      "nombre": "As de Vacuno",
+      "desc": "Carne de vacuno saltada, palta, tomate y mayo en pan de completo.",
+      "precio": 4200
+    },
+    {
+      "nombre": "Promo Dúo Dinámico",
+      "desc": "2 Italianos + Bebida 350cc (Ideal para el bajón).",
+      "precio": 6500
+    }
+  ]
+}

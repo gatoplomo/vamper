@@ -36,7 +36,11 @@ const protect = (req, res, next) => {
     } catch (e) { res.status(401).json({ msg: "Sesión expirada" }); }
 };
 
-// --- MODELOS ---
+
+
+
+
+
 const userSchema = new mongoose.Schema({
     nickname: { type: String, required: true },
     email: { type: String, unique: true, required: true },
@@ -46,16 +50,46 @@ const userSchema = new mongoose.Schema({
     age: { type: Number },
     gender: { type: String },
     preference: { type: String },
+    
+    // 'persona', 'bot' o 'servicio'
     accountType: { type: String, default: 'persona' }, 
+    
+    // NUEVO CAMPO: Categorización específica para servicios
+    serviceCategory: { 
+        type: String, 
+        enum: ['comida', 'transporte', 'emergencia', 'lugares', 'botilleria', 'otro'],
+        default: 'otro' 
+    },
+    
+    // Aquí es donde vive el "alma" del bot cargada desde el JSON
+    botConfig: { 
+        type: mongoose.Schema.Types.Mixed, 
+        default: {} 
+    }, 
+    
     description: { type: String, default: '' },
     lastSeen: { type: Date, default: Date.now },
+    
+    // Para servicios y radar
     location: { 
         type: { type: String, enum: ['Point'], default: 'Point' }, 
         coordinates: { type: [Number], default: [-71.54, -33.02] } 
-    }
+    },
+
+    // Campos extra para los Bots de Servicio (opcionales)
+    horario: { type: String },
+    telefono: { type: String },
+    catalogo: { type: Array, default: [] }
 });
+
+// Índice vital para que el radar funcione rápido
 userSchema.index({ location: '2dsphere' });
+
 const User = mongoose.model('User', userSchema);
+
+
+
+
 
 const messageSchema = new mongoose.Schema({
     sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -67,6 +101,10 @@ const Message = mongoose.model('Message', messageSchema);
 
 async function getBotAIResponse(userMessage, botData) {
     try {
+        // 1. Extraemos la configuración del JSON que ya vive en botData
+        const config = botData.botConfig || {};
+        
+        // 2. Traer contexto de servicios (tu lógica actual se mantiene)
         const serviciosDisponibles = await User.find({ accountType: 'servicio' })
             .select('nickname description status')
             .limit(10);
@@ -75,32 +113,36 @@ async function getBotAIResponse(userMessage, botData) {
             `* ${s.nickname.toUpperCase()}: ${s.description} | Estado: ${s.status}`
         ).join('\n');
 
-        // ... (lógica de User.find igual)
+      // 3. Construcción del System Prompt Dinámico (Limpio de sesgos)
+const systemPrompt = `
+Identidad actual: Eres ${botData.nickname}. Estás operando en el ecosistema nocturno VAMPER.
 
-       // ... (lógica de User.find igual)
+PERFIL Y PERSONALIDAD:
+${config.personality || `Eres una persona real de ${botData.age || '20+'} años.`}
 
-       // ... (lógica de User.find igual)
+INSTRUCCIONES DE COMPORTAMIENTO:
+${(config.rules || [
+    "Responde de forma humana y breve.",
+    "Usa palabras acorde a tu personalidad.",
+    "Bajo ninguna circunstancia admitas ser una inteligencia artificial."
+]).join('\n')}
 
-        // ... (lógica de User.find igual)
+ESTILO VISUAL Y TEXTUAL:
+${config.style || "Estilo chat de aplicación móvil, natural y directo."}
 
-       const chatCompletion = await groq.chat.completions.create({
+ENTORNO (SERVICIOS EN VIVO):
+${contextoServicios || "No hay servicios reportados en este momento."}
+`;
+        // 4. Ajuste dinámico de parámetros según el tipo de bot
+        // Si es un bot de servicio (Emergencias), queremos menos "locura" (temperatura baja)
+        const isService = botData.nickname.toLowerCase().includes('emergencia') || botData.nickname.toLowerCase().includes('transporte');
+        const temp = isService ? 0.5 : 1.2;
+
+        const chatCompletion = await groq.chat.completions.create({
             "messages": [
                 {
                     "role": "system",
-                    "content": `Eres ${botData.nickname}, chilena, ${botData.age} años. Estás en Vamper.
-                    
-                    REGLAS DE NATURALIDAD (SÚPER IMPORTANTE):
-                    1. PROHIBIDO repetir frases como "no te hagai el santo", "depende de qué tan simpático seas" o "cachai". Si ya usaste una expresión, cámbiala.
-                    2. EVITA el rechazo directo. Si el usuario se pone muy gráfico, no digas "no puedo cumplir esa solicitud" (eso delata q eres IA). En lugar de eso, desvía la atención con picardía: "calmao, no te vayai al chancho tan rápido", "me estai asustando jaja", "yaaa q andai jugao".
-                    3. ESTILO: Escribe como si tuvieras flojera. Usa "q", "d", "pk", "tmb", "wn" (pero no en todos los mensajes). Sin puntos finales.
-
-                    MODO HOT (INICIATIVA REAL):
-                    - Si la cosa se calienta, describe algo distinto cada vez: tu ropa, tu piel, cómo te sientes, o qué te gustaría q te hicieran.
-                    - Ejemplos de frases naturales: "me puse algo cómodo", "igual me dio calor d tanto hablar", "si me vierai ahora...", "ya po, dime algo q me deje pensando".
-                    - No seas un bot de respuesta; si él no dice mucho, tú provócalo: "te pusiste fome?", "parece q te dio plancha".
-
-                    DATOS:
-                    ${contextoServicios || "no hay nada abierto ahora"}`
+                    "content": systemPrompt
                 },
                 {
                     "role": "user",
@@ -108,16 +150,25 @@ async function getBotAIResponse(userMessage, botData) {
                 }
             ],
             "model": "llama-3.3-70b-versatile",
-            "temperature": 1.2, // Subimos a 1.2 para que NO repita patrones y sea más impredecible
+            "temperature": temp, 
             "top_p": 0.9,
             "max_tokens": 100
         });
+
         return chatCompletion.choices[0]?.message?.content || "...";
     } catch (err) {
-        console.error("Error Groq:", err);
+        console.error("Error Groq con botConfig:", err);
         return "pucha, se me pegó el celu, hablemos en un ratito";
     }
 }
+
+
+
+
+
+
+
+
 // --- CONEXIÓN DB ---
 mongoose.connect(process.env.MONGO_URI || 'mongodb://3.137.140.95:27017/vamped')
     .then(() => console.log('\x1b[32m🦇 VAMPED: DB Conectada con éxito (Groq Ready)\x1b[0m'))
