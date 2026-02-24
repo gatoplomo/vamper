@@ -1,0 +1,27 @@
+{
+  "serviceCategory": "otro",
+  "horario": "22:00 - 06:00 AM",
+  "telefono": "56900000000",
+  "catalogo": [
+    {
+      "nombre": "Nieve Premium (1g)",
+      "desc": "Máxima pureza, escamosa. Solo para entendidos del Radar 2.",
+      "precio": 15000
+    },
+    {
+      "nombre": "Roca de Cristal (0.5g)",
+      "desc": "Transparencia total. Potencia extrema para pasar la noche.",
+      "precio": 20000
+    },
+    {
+      "nombre": "Pack Candy Shop",
+      "desc": "Surtido de colores y formas. Consultar stock del día.",
+      "precio": 12000
+    },
+    {
+      "nombre": "VIP Express Delivery",
+      "desc": "Entrega inmediata en puntos ciegos del mapa. Sin preguntas.",
+      "precio": 5000
+    }
+  ]
+}

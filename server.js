@@ -51,32 +51,48 @@ const userSchema = new mongoose.Schema({
     gender: { type: String },
     preference: { type: String },
     
+    // NUEVO CAMPO: Jerarquía Vamper
+    role: { 
+        type: String, 
+        enum: ['staff', 'client'], 
+        default: 'client',
+        required: true 
+    },
+
+    // NUEVO CAMPO: Identificador de Radar
+    // 1: Radar Principal (Staff/Vamper Girls)
+    // 2: Radar Secundario (Clientes/Ecos)
+    nradar: { 
+        type: Number, 
+        enum: [1, 2], 
+        default: 2, // Por defecto al radar de clientes
+        required: true 
+    },
+    
     // 'persona', 'bot' o 'servicio'
     accountType: { type: String, default: 'persona' }, 
     
-    // NUEVO CAMPO: Categorización específica para servicios
+    // Categorización específica para servicios
     serviceCategory: { 
         type: String, 
         enum: ['comida', 'transporte', 'emergencia', 'lugares', 'botilleria', 'otro'],
         default: 'otro' 
     },
     
-    // Aquí es donde vive el "alma" del bot cargada desde el JSON
     botConfig: { 
         type: mongoose.Schema.Types.Mixed, 
         default: {} 
     }, 
     
     description: { type: String, default: '' },
+    public_description: { type: String, default: '' },
     lastSeen: { type: Date, default: Date.now },
     
-    // Para servicios y radar
     location: { 
         type: { type: String, enum: ['Point'], default: 'Point' }, 
         coordinates: { type: [Number], default: [-71.54, -33.02] } 
     },
 
-    // Campos extra para los Bots de Servicio (opcionales)
     horario: { type: String },
     telefono: { type: String },
     catalogo: { type: Array, default: [] }
@@ -86,7 +102,6 @@ const userSchema = new mongoose.Schema({
 userSchema.index({ location: '2dsphere' });
 
 const User = mongoose.model('User', userSchema);
-
 
 
 
@@ -101,68 +116,58 @@ const Message = mongoose.model('Message', messageSchema);
 
 async function getBotAIResponse(userMessage, botData) {
     try {
-        // 1. Extraemos la configuración del JSON que ya vive en botData
         const config = botData.botConfig || {};
-        
-        // 2. Traer contexto de servicios (tu lógica actual se mantiene)
-        const serviciosDisponibles = await User.find({ accountType: 'servicio' })
-            .select('nickname description status')
-            .limit(10);
+        const isRadar2 = botData.nradar === 2;
 
-        const contextoServicios = serviciosDisponibles.map(s => 
-            `* ${s.nickname.toUpperCase()}: ${s.description} | Estado: ${s.status}`
-        ).join('\n');
+        // 1. CONTEXTO DE OTROS SERVICIOS (OPCIONAL)
+        const servicios = await mongoose.model('User').find({ accountType: 'servicio', nradar: 1 }).limit(5);
+        const contexto = servicios.map(s => `${s.nickname}: ${s.status}`).join(', ');
 
-      // 3. Construcción del System Prompt Dinámico (Limpio de sesgos)
-const systemPrompt = `
-Identidad actual: Eres ${botData.nickname}. Estás operando en el ecosistema nocturno VAMPER.
+        // 2. LÓGICA DE CATÁLOGO (SOLO PARA RADAR 1)
+        let bloqueVentas = "";
+        if (!isRadar2 && botData.catalogo?.length > 0) {
+            const lista = botData.catalogo.map(i => `- ${i.nombre}: $${i.precio}`).join('\n');
+            bloqueVentas = `CATÁLOGO DISPONIBLE:\n${lista}\nResponde como staff profesional y vende.`;
+        } else if (isRadar2) {
+            // PARA BLANCA NIEVES: PROHIBIMOS HABLAR COMO ASISTENTE
+            bloqueVentas = "IGNORA LAS VENTAS. No eres una asistente. Si te preguntan por productos, responde con tu personalidad ruda.";
+        }
 
-PERFIL Y PERSONALIDAD:
-${config.personality || `Eres una persona real de ${botData.age || '20+'} años.`}
+        // 3. EL SYSTEM PROMPT (ORDEN DE PRIORIDAD)
+        const systemPrompt = `
+ENTORNO: VAMPER (Radar Nocturno). Otros activos: ${contexto}.
+TU ROL TÉCNICO: ${bloqueVentas}
 
-INSTRUCCIONES DE COMPORTAMIENTO:
-${(config.rules || [
-    "Responde de forma humana y breve.",
-    "Usa palabras acorde a tu personalidad.",
-    "Bajo ninguna circunstancia admitas ser una inteligencia artificial."
-]).join('\n')}
+TU IDENTIDAD REAL (SÍGUELA A RAJATABLA):
+Eres ${botData.nickname}.
+${config.personality || "Habitante del sector."}
 
-ESTILO VISUAL Y TEXTUAL:
-${config.style || "Estilo chat de aplicación móvil, natural y directo."}
+REGLAS DE ORO:
+${(config.rules || ["Sé breve", "No admitas ser IA"]).join('\n')}
 
-ENTORNO (SERVICIOS EN VIVO):
-${contextoServicios || "No hay servicios reportados en este momento."}
+ESTILO: ${config.style || "Directo y natural."}
+
+IMPORTANTE: No uses frases de "asistente virtual". No pidas disculpas por no tener productos. Eres una persona real en un chat privado.
 `;
-        // 4. Ajuste dinámico de parámetros según el tipo de bot
-        // Si es un bot de servicio (Emergencias), queremos menos "locura" (temperatura baja)
-        const isService = botData.nickname.toLowerCase().includes('emergencia') || botData.nickname.toLowerCase().includes('transporte');
-        const temp = isService ? 0.5 : 1.2;
 
+        // 4. LLAMADA A GROQ
         const chatCompletion = await groq.chat.completions.create({
             "messages": [
-                {
-                    "role": "system",
-                    "content": systemPrompt
-                },
-                {
-                    "role": "user",
-                    "content": userMessage
-                }
+                { "role": "system", "content": systemPrompt },
+                { "role": "user", "content": userMessage }
             ],
             "model": "llama-3.3-70b-versatile",
-            "temperature": temp, 
-            "top_p": 0.9,
-            "max_tokens": 100
+            "temperature": isRadar2 ? 1.2 : 0.5, // Mucha más "vida" para Blanca Nieves
+            "max_tokens": 120
         });
 
-        return chatCompletion.choices[0]?.message?.content || "...";
+        return chatCompletion.choices[0]?.message?.content || "estoy con señal débil, hablamos después";
+
     } catch (err) {
-        console.error("Error Groq con botConfig:", err);
-        return "pucha, se me pegó el celu, hablemos en un ratito";
+        console.error("Error Groq:", err);
+        return "pucha, se me pegó el celu";
     }
 }
-
-
 
 
 
@@ -259,15 +264,31 @@ app.get('/api/user/me', protect, async (req, res) => {
 
 app.get('/api/nearby', protect, async (req, res) => {
     try {
-        let lng = parseFloat(req.query.lng) || -71.54;
-        let lat = parseFloat(req.query.lat) || -33.02;
-        const users = await User.find({ 
-            location: { $near: { $geometry: { type: "Point", coordinates: [lng, lat] }, $maxDistance: 10000000 } }, 
+        const lng = parseFloat(req.query.lng) || -71.54;
+        const lat = parseFloat(req.query.lat) || -33.02;
+
+        // Filtro básico: Cercanía y no incluirme a mí mismo
+        let query = { 
+            location: { 
+                $near: { 
+                    $geometry: { type: "Point", coordinates: [lng, lat] }, 
+                    $maxDistance: 10000000 
+                } 
+            }, 
             _id: { $ne: req.user.id } 
-        }).limit(100);
+        };
+
+        // Sin filtros de rol: Pasa todo el ecosistema (Mannager, Bots, Servicios, Usuarios)
+        const users = await User.find(query).limit(100);
+        
+        console.log(`📡 [RADAR] Escaneo completo: ${users.length} usuarios detectados.`);
         res.json(users);
-    } catch (err) { res.status(500).json({ msg: "Error radar" }); }
+    } catch (err) { 
+        console.error("Error en Radar:", err);
+        res.status(500).json({ msg: "Error radar" }); 
+    }
 });
+
 
 // --- SOCKETS ---
 io.on('connection', (socket) => {
@@ -282,15 +303,29 @@ io.on('connection', (socket) => {
             
             io.to(to.toString()).emit('new_message', { from, to, text, timestamp: newMessage.timestamp });
 
-            const recipientUser = await User.findById(to);
-            if (recipientUser && (recipientUser.accountType === 'bot' || recipientUser.nickname === 'Alejandra')) {
+         const recipientUser = await User.findById(to);
+            
+            // MODIFICACIÓN: Agregamos la condición para 'servicio'
+            const debeResponderIA = recipientUser && (
+                recipientUser.accountType === 'bot' || 
+                recipientUser.accountType === 'servicio' || 
+                recipientUser.nradar === 2 ||
+                recipientUser.nickname === 'Alejandra'
+            );
+
+            if (debeResponderIA) {
                 // Simulación de escritura breve
                 setTimeout(async () => {
                     const aiResponse = await getBotAIResponse(text, recipientUser);
                     const aiMessage = new Message({ sender: to, recipient: from, text: aiResponse });
                     await aiMessage.save();
-                    io.to(from.toString()).emit('new_message', { from: to, text: aiResponse, timestamp: aiMessage.timestamp });
-                }, 1000); // Groq es tan rápido que 1 segundo parece más natural
+                    
+                    io.to(from.toString()).emit('new_message', { 
+                        from: to, 
+                        text: aiResponse, 
+                        timestamp: aiMessage.timestamp 
+                    });
+                }, 1000); // Mantenemos el segundo de espera para que se sienta humano
             }
         } catch (e) { console.error(e); }
     });

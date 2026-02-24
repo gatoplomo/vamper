@@ -42,6 +42,15 @@
             display: inline-block;
         }
 
+     
+.offline-dot { 
+    width: 8px; height: 8px; 
+    background: #444 !important; /* Gris oscuro */
+    border-radius: 50%; 
+    display: inline-block;
+    box-shadow: none !important; /* Sin brillo neón */
+}
+
         .time-text { font-size: 0.65rem; color: var(--offline); display: block; margin-bottom: 2px; }
         .user-status-text { 
             color: var(--service); font-size: 0.65rem; font-weight: normal; 
@@ -92,6 +101,12 @@
         <div class="d-flex align-items-center ms-1" style="cursor:pointer" onclick="openGalleryModal()">
             <i class="bi bi-camera-fill fs-4" style="color: var(--accent); filter: drop-shadow(0 0 5px var(--accent));"></i>
         </div>
+        <div id="vamper-clock" class="digital-clock">00:00:00</div>
+    </div>
+
+    <div class="beeper-container d-none d-md-flex flex-grow-1 mx-4">
+        <div id="beeper-ticker" class="beeper-text">
+            </div>
     </div>
     
     <div class="d-flex align-items-center gap-3">
@@ -127,9 +142,124 @@
 </div>
 
 
+<script>
+    
+    function updateClock() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    
+    document.getElementById('vamper-clock').textContent = `${hours}:${minutes}:${seconds}`;
+}
 
+// Ejecutar cada segundo
+setInterval(updateClock, 1000);
+// Llamar de inmediato para evitar el lag de 1s al cargar
+updateClock();
+</script>
 
+<style>
 
+    .nav-right-section {
+    display: flex;
+    align-items: center; /* Alinea todo verticalmente al centro */
+    gap: 15px;           /* Da espacio uniforme entre beeper, reloj y foto */
+}
+
+.digital-clock {
+    font-family: 'Courier New', monospace;
+    color: #00FF41;
+    text-shadow: 0 0 8px #00FF41;
+    font-size: 14px; /* Ajusta según el tamaño de tu nav */
+    font-weight: bold;
+    min-width: 80px; /* Evita que el layout salte cuando cambian los números */
+    text-align: center;
+}
+
+.beeper-container {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 4px;
+    height: 32px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.beeper-text {
+    white-space: nowrap;
+    position: absolute;
+    font-family: 'monospace';
+    font-size: 0.85rem;
+    color: var(--accent);
+    text-shadow: 0 0 5px var(--accent);
+    text-transform: uppercase;
+    left: 100%; /* Empieza fuera a la derecha */
+    will-change: left;
+}
+</style>
+
+    
+<script>
+const avisosVamper = [
+    "SISTEMA VAMPER V.3.1 :: LOCALIZATOR ACTIVO",
+    "BOTILLERÍA: PROMO PACK PISCO + BEBIDA ACTIVA HASTA LAS 05:00 AM 🍷",
+    "EL MAESTRO SANGUCHERO REPORTA: CARBÓN EN SU PUNTO MÁXIMO 🔥",
+    "UNIDADES DE TRANSPORTE EN LÍNEA: 5 DISPONIBLES EN VIÑA 🚗",
+    "COMUNIDAD: 124 USUARIOS RASTREADOS EN EL RADAR AHORA MISMO 📡",
+    "OFERTA RELÁMPAGO: SEGUNDO SÁNDWICH CON 30% DSCTO EN EL BAJÓN 🍔",
+    "BOTILLERÍA: STOCK RELLENADO - CERVEZAS HELADAS LISTAS",
+    "VAMPER GIRL: REVISA NUESTRO CATÁLOGO DE TRAGOS VIP 🥂",
+    "LOGÍSTICA: TIEMPO ESTIMADO DE LLEGADA: 8 MINUTOS",
+    "ALERTA: NUEVOS EVENTOS PRÓXIMAMENTE EN TU ZONA... MANTÉN EL RADAR ABIERTO"
+];
+
+let beeperAnimationFrame; // Para tener control del ciclo
+
+function startBeeper() {
+    const ticker = document.getElementById('beeper-ticker');
+    const container = ticker ? ticker.parentElement : null;
+    
+    if (!ticker || !container) return;
+
+    function animateNext() {
+        // 1. Cancelar cualquier animación previa para evitar duplicados
+        cancelAnimationFrame(beeperAnimationFrame);
+
+        // 2. Elegir mensaje aleatorio
+        const randomMsg = avisosVamper[Math.floor(Math.random() * avisosVamper.length)];
+        ticker.innerText = `>>> ${randomMsg} <<<`;
+        
+        // 3. Pequeña pausa para que el DOM registre el nuevo texto y su ancho
+        setTimeout(() => {
+            const containerWidth = container.offsetWidth;
+            const textWidth = ticker.offsetWidth;
+            let currentPos = containerWidth;
+            
+            ticker.style.left = currentPos + "px";
+
+            function step() {
+                currentPos -= 2.2; // Velocidad suave
+                ticker.style.left = currentPos + "px";
+
+                if (currentPos < -textWidth) {
+                    animateNext(); // Reiniciar con mensaje nuevo
+                } else {
+                    beeperAnimationFrame = requestAnimationFrame(step);
+                }
+            }
+            beeperAnimationFrame = requestAnimationFrame(step);
+        }, 50); 
+    }
+
+    animateNext();
+}
+
+// Iniciar al cargar el DOM
+document.addEventListener('DOMContentLoaded', startBeeper);
+</script>
 
 
 
@@ -484,31 +614,179 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
 
 
 
-
-
-
 <div id="radar-view" class="view-section active-view container-fluid p-2">
     <div class="row g-1 row-cols-2 row-cols-md-4 row-cols-lg-6" id="main-grid"></div>
+
+    <div class="vamper-footer-ads mt-4">
+        <div class="row g-2"> 
+            <div class="col-12 col-md-6">
+                <div class="footer-poster" id="ad-slot-1">
+                    <img src="/anuncios/1.jpg" class="ad-image active" alt="Vamper Ad">
+                    <img src="/anuncios/3.jpg" class="ad-image" alt="Vamper Ad">
+                    <img src="/anuncios/5.jpg" class="ad-image" alt="Vamper Ad">
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="footer-poster" id="ad-slot-2">
+                    <img src="/anuncios/2.jpg" class="ad-image active" alt="Vamper Ad">
+                    <img src="/anuncios/4.jpg" class="ad-image" alt="Vamper Ad">
+                    <img src="/anuncios/6.jpg" class="ad-image" alt="Vamper Ad">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="radar-view-2" class="mt-5 pt-4 border-top border-dark">
+        <div class="d-flex justify-content-between align-items-center mb-3 px-2">
+            <h6 class="text-uppercase fw-bold m-0" style="letter-spacing: 3px; color: #444;">
+                <i class="bi bi-broadcast me-2"></i> Escaneo de Frecuencia Secundario
+            </h6>
+            <span class="badge rounded-pill" style="background: #111; color: #ff0000; border: 1px solid #300;">EN LÍNEA</span>
+        </div>
+        
+        <div class="row g-1 row-cols-3 row-cols-md-6 row-cols-lg-8" id="secondary-grid">
+            <div class="col">
+                <div class="user-mini-card"></div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div id="chat-view" class="view-section container-fluid g-0">
-    <div class="row h-100 g-0">
-        <div class="col-4 col-md-3 chat-sidebar" id="conversations-list"></div>
-        <div class="col-8 col-md-9 d-flex flex-column">
-            <div id="chat-header" class="p-3 border-bottom border-dark small fw-bold text-uppercase" style="background: #080808;">Panel de Monitoreo</div>
-            <div class="chat-messages" id="chat-messages"></div>
-            <div class="p-3 border-top border-dark" style="background: #080808;">
-                <div class="input-group">
-                    <input type="text" id="chat-input" class="form-control bg-transparent text-white border-secondary" placeholder="Mensaje ADMIN...">
-                    <button class="btn btn-danger" onclick="sendMessage()">ENVIAR</button>
+<div id="chat-view" class="view-section container-fluid p-0">
+    <div class="d-flex h-100">
+        <div class="chat-sidebar col-4 col-md-3 d-flex flex-column" id="conversations-list" style="background: #080808;">
+            <div class="p-3 small text-muted text-uppercase" style="letter-spacing: 2px; font-size: 0.7rem;">Log de Actividad</div>
+        </div>
+
+        <div class="col-8 col-md-9 d-flex flex-column h-100" style="background: #050505;">
+            <div id="chat-header" class="p-3 border-bottom border-secondary small fw-bold text-uppercase" style="letter-spacing:2px; color: var(--accent); background: #050505;">
+                MONITOREANDO: <span id="chat-user-name">...</span>
+            </div>
+            
+            <div id="chat-messages" class="chat-messages flex-grow-1 p-3">
+                </div>
+
+            <div class="p-3" style="background: #080808; border-top: 1px solid #1a1a1a;">
+                <div style="position: relative; display: flex; align-items: center;">
+                    <input type="text" id="chat-input" 
+                        style="width: 100%; background: #151515; border: 1px solid #333; color: white; padding: 12px 60px 12px 15px; border-radius: 30px; outline: none; transition: 0.3s;" 
+                        placeholder="Escribe un mensaje..." 
+                        onkeypress="if(event.key==='Enter') sendMessage()">
+                    
+                    <button onclick="sendMessage()" 
+                        style="position: absolute; right: 5px; background: var(--accent); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s;">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<style>
+/* --- ESTILOS DE LA SECCIÓN DE ANUNCIOS --- */
+
+.vamper-footer-ads {
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    /* Borde Neón Principal */
+    border: 2px solid #ff003c; 
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(255, 0, 60, 0.6), 
+                inset 0 0 15px rgba(255, 0, 60, 0.3);
+    margin-bottom: 50px; /* Espacio para no chocar con el borde inferior */
+    position: relative;
+    z-index: 10;
+}
+
+.footer-poster {
+    position: relative;
+    width: 100%;
+    /* Mantiene el formato 2:1 aproximadamente de tus anuncios originales */
+    aspect-ratio: 16 / 8; 
+    overflow: hidden;
+    border-radius: 8px;
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ad-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* IMPORTANTE: Mantiene el formato original sin estirar */
+    opacity: 0;
+    transform: scale(1.1) translateY(10px);
+    transition: opacity 0.2s ease-in-out, transform 0.2s ease-out;
+    z-index: 1;
+}
+
+/* Estado de la imagen visible (Efecto Flash) */
+.ad-image.active {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    z-index: 2;
+}
+
+
+@keyframes neon-pulse {
+    0% { box-shadow: 0 0 20px rgba(255, 0, 60, 0.6); }
+    50% { box-shadow: 0 0 40px rgba(255, 0, 60, 1), 0 0 60px rgba(255, 0, 60, 0.8); }
+    100% { box-shadow: 0 0 20px rgba(255, 0, 60, 0.6); }
+}
+
+/* --- RESPETAR EL RESTO DE LA APP --- */
+::-webkit-scrollbar { display: none; }
+.view-section {
+    overflow-y: scroll; 
+    height: calc(100vh - 70px);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const slots = [
+        document.getElementById('ad-slot-1'),
+        document.getElementById('ad-slot-2')
+    ];
+
+    function rotateAds(slot) {
+        const images = slot.querySelectorAll('.ad-image');
+        const activeImg = slot.querySelector('.ad-image.active');
+        let nextIndex = Array.from(images).indexOf(activeImg) + 1;
+
+        if (nextIndex >= images.length) nextIndex = 0;
+
+        // Quitamos clase active a la actual
+        activeImg.classList.remove('active');
+        
+        // Efecto Flash en el borde neón del contenedor padre
+        const container = slot.closest('.vamper-footer-ads');
+        container.classList.remove('flash-border');
+        void container.offsetWidth; // Trigger reflow para reiniciar animación
+        container.classList.add('flash-border');
+
+        // Activamos la siguiente imagen
+        images[nextIndex].classList.add('active');
+    }
+
+    // Intervalo de cambio rápido ("Flash") cada 3 segundos (3000ms)
+    // Usamos tiempos ligeramente distintos para que no cambien exactamente igual
+    setInterval(() => rotateAds(slots[0]), 5000);
+    setTimeout(() => {
+        setInterval(() => rotateAds(slots[1]), 8000);
+    }, 1500); // El segundo slot empieza con desfase para más dinamismo
+});
+</script>
+
+
+
 <div id="profileModal" class="vamped-modal-overlay" onclick="this.style.display='none'">
-    <div class="modal-content-vamped text-center" onclick="event.stopPropagation()">
+    <div class="modal-content-vamped text-center vamped-anim-in" onclick="event.stopPropagation()">
         <div class="slider-container"><img id="modalImg" src=""></div>
         <h5 id="modalName" class="mb-0"></h5>
         <div id="modalTime" class="time-text mb-1"></div>
@@ -523,6 +801,109 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
     </div>
 </div>
 
+<style>
+/* El contenedor de fondo (Overlay) - OPTIMIZADO: Sin Blur */
+.vamped-modal-overlay {
+    background: rgba(0, 0, 0, 0.9) !important; /* Un poco más oscuro para suplir la falta de blur */
+}
+
+/* El cuerpo del Modal */
+.modal-content-vamped {
+    background: #0a0a0a !important; 
+    border: 1px solid #1a1a1a; 
+    border-radius: 2px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 1), 
+                inset 0 0 10px rgba(255, 0, 0, 0.05);
+    padding: 20px;
+    max-width: 400px;
+    position: relative;
+    color: #e0e0e0;
+    /* Optimización de hardware */
+    will-change: transform, opacity;
+}
+
+/* El Neón Negro - Simplificado para evitar lag de capas */
+.modal-content-vamped::after {
+    content: "";
+    position: absolute;
+    top: -1px; left: -1px; right: -1px; bottom: -1px;
+    background: #111;
+    z-index: -1;
+    border-radius: 2px;
+}
+
+/* Títulos y Texto */
+#modalName {
+    font-family: 'serif';
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #fff;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+}
+
+.text-muted {
+    color: #777 !important;
+    font-style: italic;
+}
+
+/* Botones con respuesta INSTANTÁNEA (0.1s) */
+.modal-content-vamped .btn-danger {
+    background: transparent !important;
+    border: 1px solid #ff0000;
+    color: #ff0000;
+    text-transform: uppercase;
+    font-weight: bold;
+    transition: all 0.1s ease-out; /* Cambio ultra rápido */
+}
+
+.modal-content-vamped .btn-danger:hover {
+    background: #ff0000 !important;
+    color: #000;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+    transform: translateY(-1px); /* Feedback táctil leve */
+}
+
+/* Definimos la animación: Un pequeño salto de escala y entrada de luz */
+@keyframes vamperFadeIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.9) translateY(10px);
+        filter: brightness(2); /* Empieza con un destello de luz */
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+        filter: brightness(1);
+    }
+}
+
+/* Esta clase se activa cuando el modal aparece */
+.vamped-anim-in {
+    animation: vamperFadeIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.modal-content-vamped .btn-warning {
+    background: #151515 !important;
+    border: 1px solid #333;
+    color: #888 !important;
+    transition: all 0.1s ease-out;
+}
+
+.modal-content-vamped .btn-warning:hover {
+    border-color: #666;
+    color: #fff !important;
+    background: #222 !important;
+}
+
+/* Contenedor de Imagen */
+.slider-container img {
+    border-bottom: 2px solid #1a1a1a;
+    margin-bottom: 15px;
+    /* Quitamos filtros complejos si hay mucho lag */
+    width: 100%;
+    height: auto;
+}
+</style>
 <script>
     const socket = io();
     const token = localStorage.getItem('vamped_token');
@@ -659,32 +1040,79 @@ socket.on('connect', () => {
         container.scrollTop = container.scrollHeight;
     }
 
-    async function loadNearby() {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            const res = await fetch(`/api/nearby?lng=${pos.coords.longitude}&lat=${pos.coords.latitude}`, { headers: { 'Authorization': `Bearer ${token}` } });
-            nearbyUsers = await res.json();
-            const grid = document.getElementById('main-grid');
-            grid.innerHTML = nearbyUsers.map((u, index) => {
-                const isService = u.accountType === 'servicio';
-                const timeAgo = getTimeAgo(u.lastSeen);
-                const isOnline = timeAgo === "En línea";
-                return `
-                <div class="col">
-                    <div class="user-card" onclick="openProfileByIndex(${index})">
-                        <img src="${u.photo || ''}">
-                        <div class="user-info-tag">
-                            <span class="user-name" style="color: ${isService ? 'var(--service)' : 'white'}">
-                                ${isOnline ? '<span class="online-dot"></span>' : ''}
-                                ${u.nickname}, ${u.age || ''}
-                            </span>
-                            <span class="time-text">${timeAgo}</span>
-                            <span class="user-status-text">${u.status || ''}</span>
-                        </div>
-                    </div>
-                </div>`;
-            }).join('');
-        });
+async function loadNearby() {
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        try {
+            const url = `/api/nearby?lng=${pos.coords.longitude}&lat=${pos.coords.latitude}`;
+            const res = await fetch(url, { 
+                headers: { 'Authorization': `Bearer ${token}` } 
+            });
+            
+            const allUsers = await res.json();
+
+            // 1. Filtramos los dos grupos
+            const group1 = allUsers.filter(u => Number(u.nradar) === 1);
+            const group2 = allUsers.filter(u => Number(u.nradar) === 2);
+
+            nearbyUsers = [...group1, ...group2];
+
+  const createCardHTML = (u, arrayIndex, isSecondary = false) => {
+    const isService = u.accountType === 'servicio';
+    const nRadar = Number(u.nradar);
+    
+    // 1. La base de la verdad (online solo si la DB lo dice)
+    const isOnline = u.online === true; 
+    
+    // 2. Estética
+    const nameColor = isSecondary ? '#00ffcc' : (isService ? 'var(--service)' : 'white');
+    let timeAgo = getTimeAgo(u.lastSeen);
+
+    // --- EL FIX PARA EL RADAR 1 ---
+    // Si es Radar 1 y está online, FORZAMOS que diga "En línea" para que no salga el tiempo viejo.
+    // Si es Radar 2 y está offline, FORZAMOS que NO diga "En línea".
+    let displayTime = timeAgo;
+    
+    if (nRadar === 1 && isOnline) {
+        displayTime = "En línea";
+    } else if (!isOnline && timeAgo === "En línea") {
+        displayTime = "Desconectado";
     }
+
+    // 3. Lógica de Estado (Status)
+    const displayStatus = isOnline ? (u.status || '') : (u.status || "FUERA DE RANGO...");
+
+    return `
+    <div class="col">
+        <div class="user-card" onclick="openProfileByIndex(${arrayIndex})">
+            <img src="${u.photo || ''}" style="${isSecondary ? 'filter: brightness(0.8);' : ''}">
+            <div class="user-info-tag">
+                <span class="user-name" style="color: ${nameColor}">
+                    ${isOnline ? '<span class="online-dot"></span>' : '<span class="offline-dot"></span>'}
+                    ${u.nickname}${u.age ? ', ' + u.age : ''}
+                </span>
+                <span class="time-text">${displayTime}</span>
+                <span class="user-status-text">${displayStatus}</span>
+            </div>
+        </div>
+    </div>`;
+};
+
+            // 3. Renderizamos Radar 1
+            const mainGrid = document.getElementById('main-grid');
+            mainGrid.innerHTML = group1.map((u, i) => createCardHTML(u, i, false)).join('');
+
+            // 4. Renderizamos Radar 2
+            const secondaryGrid = document.getElementById('secondary-grid');
+            const offset = group1.length; 
+            secondaryGrid.innerHTML = group2.map((u, i) => createCardHTML(u, i + offset, true)).join('');
+
+            console.log("✅ Radares sincronizados con estados dinámicos.");
+
+        } catch (error) {
+            console.error("❌ Error en la carga del radar:", error);
+        }
+    });
+}
 
     function openProfileByIndex(index) {
         const u = nearbyUsers[index];
@@ -694,7 +1122,8 @@ socket.on('connect', () => {
         document.getElementById('modalName').innerText = `${u.nickname}, ${u.age || ''}`;
         document.getElementById('modalTime').innerText = timeAgo;
         document.getElementById('modalStatusDisplay').innerText = u.status ? `"${u.status}"` : "";
-        document.getElementById('modalDesc').innerText = u.description || "";
+        // Prioriza la descripción pública, si no existe usa la descripción normal
+document.getElementById('modalDesc').innerText = u.public_description || u.description || "";
         document.getElementById('modalTime').style.color = timeAgo === "En línea" ? "var(--online)" : "var(--offline)";
    const btnAlbum = document.getElementById('btnAlbum');
         if (u.accountType === 'servicio') {
@@ -811,7 +1240,7 @@ syncMyProfile();
     document.getElementById('modalName').innerText = `${u.nickname}, ${u.age || ''}`;
     document.getElementById('modalTime').innerText = timeAgo;
     document.getElementById('modalStatusDisplay').innerText = u.status ? `"${u.status}"` : "";
-    document.getElementById('modalDesc').innerText = u.description || "";
+    document.getElementById('modalDesc').innerText = u.public_description || u.description || "";
     
     const timeDisplay = document.getElementById('modalTime');
     timeDisplay.style.color = timeAgo === "En línea" ? "var(--online)" : "var(--offline)";

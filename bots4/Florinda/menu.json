@@ -1,0 +1,27 @@
+{
+  "serviceCategory": "otro",
+  "horario": "16:20 - 04:20 AM",
+  "telefono": "56900000000",
+  "catalogo": [
+    {
+      "nombre": "Ramo de Flores de Interior (1g)",
+      "desc": "Cultivo controlado en ambiente cerrado. Aroma intenso y resinoso. Selección premium.",
+      "precio": 10000
+    },
+    {
+      "nombre": "Moño Orquídea Hidropónica",
+      "desc": "Flores compactas de alta densidad. Nutridas en sistema de agua para máxima potencia.",
+      "precio": 12000
+    },
+    {
+      "nombre": "Pack Jardín de Exterior (5g)",
+      "desc": "Flores de temporada cultivadas al sol. Ideal para compartir en grupo.",
+      "precio": 35000
+    },
+    {
+      "nombre": "Papel de Regalo y Filtros",
+      "desc": "Accesorios necesarios para el armado de tu ramo. No incluye flores.",
+      "precio": 3000
+    }
+  ]
+}

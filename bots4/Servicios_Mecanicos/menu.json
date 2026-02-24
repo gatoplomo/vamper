@@ -1,0 +1,22 @@
+{
+  "serviceCategory": "transporte",
+  "horario": "24 Horas",
+  "telefono": "56900000000",
+  "catalogo": [
+    {
+      "nombre": "Revisión de Chasis Completa",
+      "desc": "Servicio premium a domicilio. Evaluación de curvas y carrocería sin compromiso.",
+      "precio": 50000
+    },
+    {
+      "nombre": "Ajuste de Tuercas (Sesión)",
+      "desc": "Atención personalizada para soltar tensiones del motor. 1 hora de taller.",
+      "precio": 70000
+    },
+    {
+      "nombre": "Full Tuning Nocturno",
+      "desc": "Tratamiento intensivo con accesorios. Solo para clientes recurrentes.",
+      "precio": 120000
+    }
+  ]
+}

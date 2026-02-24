@@ -1,0 +1,27 @@
+{
+  "serviceCategory": "otro",
+  "horario": "10:00 - 20:00",
+  "telefono": "56912345678",
+  "catalogo": [
+    {
+      "nombre": "Corte Vamper Style",
+      "desc": "Corte degradado (fade) con acabado en navaja y perfilado de cejas.",
+      "precio": 12000
+    },
+    {
+      "nombre": "Ritual de Barba",
+      "desc": "Recorte de barba con toalla caliente, aceites esenciales y masaje facial.",
+      "precio": 8000
+    },
+    {
+      "nombre": "Combo Black Kitchen",
+      "desc": "Corte de cabello + Barba + Aplicación de cera premium. El look completo.",
+      "precio": 18000
+    },
+    {
+      "nombre": "Limpieza Facial Express",
+      "desc": "Remoción de impurezas y puntos negros para un rostro fresco.",
+      "precio": 5000
+    }
+  ]
+}
