@@ -349,67 +349,106 @@ app.get('/api/nearby', protect, async (req, res) => {
 });
 
 
-// --- SOCKETS ---
+// --- SOCKETS CORREGIDOS CON PRECISIÓN Y CONTROL DE SESIÓN ---
 io.on('connection', (socket) => {
-    socket.on('join', (userId) => { if(userId) socket.join(userId.toString()); });
-socket.on('private_message', async (data) => {
-    // Aseguramos capturar senderData del emisor
-    const { from, to, text, senderData } = data; 
-    
-    try {
-        if (!from || !to) return;
+    // Variable local al socket para rastrear la sala actual y evitar fugas de mensajes
+    let currentRoom = null;
 
-        // 1. Guardar mensaje del emisor (Tú)
-        const newMessage = new Message({ sender: from, recipient: to, text: text });
-        await newMessage.save();
-        
-        io.to(to.toString()).emit('new_message', { 
-            from, 
-            to, 
-            text, 
-            timestamp: newMessage.timestamp 
-        });
+    // 1. Registro en Sala Privada (Vital para recibir mensajes)
+    socket.on('join', (userId) => { 
+        if(userId) {
+            // SEGURIDAD: Si el socket ya estaba en una sala (sesión previa), lo sacamos primero
+            if (currentRoom && currentRoom !== userId.toString()) {
+                socket.leave(currentRoom);
+                console.log(`🧹 [SESIÓN] Limpiando sala previa: ${currentRoom}`);
+            }
 
-        // 2. Lógica de respuesta del Bot
-        const recipientUser = await User.findById(to);
-        
-        const debeResponderIA = recipientUser && (
-            recipientUser.accountType === 'bot' || 
-            recipientUser.accountType === 'servicio' || 
-            recipientUser.nradar === 2 ||
-            recipientUser.nickname === 'Alejandra'
-        );
+            const room = userId.toString();
+            socket.join(room); 
+            currentRoom = room; // Actualizamos la sala activa de este socket
 
-        if (debeResponderIA) {
-            setTimeout(async () => {
-                // Obtenemos la respuesta de la IA
-                const aiResponse = await getBotAIResponse(text, recipientUser, senderData);
-                
-                // Si la IA respondió algo válido...
-                if (aiResponse) {
-                    // LOG CRÍTICO: Ver en consola qué está mandando el bot de vuelta
-                    console.log(`💬 [RESPUESTA SALIENTE] ${recipientUser.nickname} -> ${senderData?.nickname || 'Usuario'}: "${aiResponse}"`);
-
-                    const aiMessage = new Message({ sender: to, recipient: from, text: aiResponse });
-                    await aiMessage.save();
-                    
-                    // Emitir la respuesta al emisor original
-                    io.to(from.toString()).emit('new_message', { 
-                        from: to, 
-                        text: aiResponse, 
-                        timestamp: aiMessage.timestamp 
-                    });
-                } else {
-                    console.log(`🚫 ${recipientUser.nickname} decidió no responder (Posible humano o error).`);
-                }
-            }, 1000); 
+            // Log para debuggear conexiones humanas en tiempo real
+            console.log(`📡 [RED PRIVADA] Nodo activo: ${room}`);
         }
-    } catch (e) { 
-        console.error("🔥 Error en tráfico privado:", e); 
-    }
-});
-});
+    });
 
+    // SEGURIDAD ADICIONAL: Limpieza automática al desconectar físicamente
+    socket.on('disconnect', () => {
+        if (currentRoom) {
+            console.log(`🔌 [RED PRIVADA] Nodo liberado: ${currentRoom}`);
+            socket.leave(currentRoom);
+        }
+    });
+
+    socket.on('private_message', async (data) => {
+        const { from, to, text, senderData } = data; 
+        
+        try {
+            if (!from || !to) return;
+
+            // 1. Guardar mensaje original en la Base de Datos
+            const newMessage = new Message({ sender: from, recipient: to, text: text });
+            await newMessage.save();
+            
+            // --- CORRECCIÓN QUIRÚRGICA AQUÍ ---
+            // A) Enviar al destinatario (to)
+            io.to(to.toString()).emit('new_message', { 
+                from, 
+                to, 
+                text, 
+                timestamp: newMessage.timestamp 
+            });
+
+            // B) Enviar de vuelta al emisor (from) 
+            // Esto asegura que si tienes varias pestañas abiertas, el mensaje aparezca en todas.
+            io.to(from.toString()).emit('new_message', { 
+                from, 
+                to, 
+                text, 
+                timestamp: newMessage.timestamp 
+            });
+            
+            // Log de tráfico para auditoría
+            console.log(`✉️ [TRÁFICO] ${senderData?.nickname || from} -> Destinatario: ${to}`);
+
+            // 2. Lógica de Respuesta Automática (IA / Bots)
+            const recipientUser = await User.findById(to);
+            
+            const debeResponderIA = recipientUser && (
+                recipientUser.accountType === 'bot' || 
+                recipientUser.accountType === 'servicio' || 
+                recipientUser.nradar === 2 ||
+                recipientUser.nickname === 'Alejandra'
+            );
+
+            // Bloqueo preventivo: Si el destino es humano (is_human: true), no hacemos nada más.
+            if (debeResponderIA) {
+                setTimeout(async () => {
+                    // Llamada a Groq (Solo si el receptor es sintético)
+                    const aiResponse = await getBotAIResponse(text, recipientUser, senderData);
+                    
+                    if (aiResponse) {
+                        console.log(`💬 [IA RESPONDEDOR] ${recipientUser.nickname} responde a ${senderData?.nickname || 'Usuario'}: "${aiResponse}"`);
+
+                        const aiMessage = new Message({ sender: to, recipient: from, text: aiResponse });
+                        await aiMessage.save();
+                        
+                        // La respuesta de la IA solo viaja al emisor original
+                        io.to(from.toString()).emit('new_message', { 
+                            from: to, 
+                            text: aiResponse, 
+                            timestamp: aiMessage.timestamp 
+                        });
+                    } else {
+                        console.log(`🚫 [IA MUTE] ${recipientUser.nickname} filtró la respuesta.`);
+                    }
+                }, 1000); 
+            }
+        } catch (e) { 
+            console.error("🔥 Error crítico en tráfico privado:", e); 
+        }
+    });
+});
 
 
 
