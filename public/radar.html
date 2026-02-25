@@ -1834,7 +1834,7 @@ window.addEventListener('load', () => {
     startBtn.addEventListener('click', () => {
         // A. AUDIO - Play inmediato
         const introTrack = "Synth/vladislav_zavorin-dark-techno-450565.mp3";
-        vamperRadio.src = `http://localhost:5000/stream/${introTrack}`;
+        vamperRadio.src = `http://3.137.140.95:5000/stream/${introTrack}`;
         vamperRadio.volume = 0.5;
         vamperRadio.play().catch(e => console.log("Audio prep:", e));
 
@@ -2149,7 +2149,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!command) return;
         await writeToConsole(`> PROCESANDO_PETICIÓN: ${command.toUpperCase()}...`, 10);
         try {
-            const response = await fetch('http://localhost:3333/ask-vamper', {
+            const response = await fetch('http://3.137.140.95:3333/ask-vamper', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ input: command })
@@ -2619,8 +2619,8 @@ document.getElementById('v-command-input').addEventListener('keydown', async fun
 
 <script>
 // --- CONFIGURACIÓN DE CONEXIÓN ---
-const AUDIO_CORE_URL = 'http://localhost:3334'; // Donde vive el cerebro
-const FILE_SERVER_URL = 'http://localhost:5000'; // Donde viven los archivos .mp3
+const AUDIO_CORE_URL = 'http://3.137.140.95:3334'; // Donde vive el cerebro
+const FILE_SERVER_URL = 'http://3.137.140.95:5000'; // Donde viven los archivos .mp3
 const vamperRadio = new Audio(); 
 
 // 1. Monitor de Conexión (Apunta al Cerebro)

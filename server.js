@@ -216,10 +216,10 @@ ESTILO: ${config.style || "Directo y natural."}
 
 
 
-// --- CONEXIÓN DB ---
-mongoose.connect(process.env.MONGO_URI || 'mongodb://3.137.140.95:27017/vamped')
-    .then(() => console.log('\x1b[32m🦇 VAMPED: DB Conectada con éxito (Groq Ready)\x1b[0m'))
-    .catch(err => console.error('Error DB:', err));
+// SUSTITUYE TU LÍNEA POR ESTA:
+mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/vamped')
+  .then(() => console.log("✅ Conexión exitosa a MongoDB Local (AWS)"))
+  .catch(err => console.error("❌ Error conectando a MongoDB:", err));
 
 // --- API ROUTES ---
 app.post('/api/user/update', protect, async (req, res) => {
