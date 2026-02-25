@@ -3,7 +3,6 @@ const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
 
-// Solo nos interesa bots3 para este proceso
 const dirOrigenSecundario = path.join(__dirname, 'bots3'); 
 const dirDestino = path.join(__dirname, 'public', 'uploads', 'users'); 
 
@@ -11,7 +10,7 @@ if (!fs.existsSync(dirDestino)) {
     fs.mkdirSync(dirDestino, { recursive: true });
 }
 
-// Esquema alineado
+// ESQUEMA ACTUALIZADO: Incluye is_human
 const User = mongoose.model('User', new mongoose.Schema({
     nickname: String,
     email: { type: String, unique: true },
@@ -19,9 +18,11 @@ const User = mongoose.model('User', new mongoose.Schema({
     photo: String,
     status: String,
     description: String,
+    public_description: String,
     age: Number,
     role: { type: String, default: 'client' }, 
     accountType: { type: String, default: 'bot' },
+    is_human: { type: Boolean, default: false }, // <--- CAMPO DE SEGURIDAD PARA RADAR 2
     nradar: { type: Number, default: 2 }, 
     botConfig: { type: mongoose.Schema.Types.Mixed, default: {} },
     location: {
@@ -52,6 +53,7 @@ const procesarCarpetaRadar2 = async (directorio, hashedPass) => {
 
             const edadFinal = botJson.age || (Math.floor(Math.random() * 15) + 18);
             const descFinal = botJson.personality || "Entidad del Radar 2.";
+            const publicDescFinal = botJson.public_description || descFinal;
 
             let estadoFinal;
             if (botJson.status_list && Array.isArray(botJson.status_list)) {
@@ -79,10 +81,12 @@ const procesarCarpetaRadar2 = async (directorio, hashedPass) => {
                     photo: `/uploads/users/${nuevoNombreArchivo}`, 
                     status: estadoFinal,
                     description: descFinal,
+                    public_description: publicDescFinal,
                     age: edadFinal,
                     accountType: 'bot',
+                    is_human: false, // <--- INYECCIÓN: Confirmado como no-humano
                     role: 'client',
-                    nradar: 2, // <--- ÚNICAMENTE RADAR 2
+                    nradar: 2, 
                     botConfig: botJson, 
                     location: {
                         type: 'Point',
@@ -92,7 +96,7 @@ const procesarCarpetaRadar2 = async (directorio, hashedPass) => {
                 { upsert: true, new: true, setDefaultsOnInsert: false }
             );
 
-            console.log(`📡 [RADAR 2] Sincronizado: ${nombreBot}`);
+            console.log(`📡 [RADAR 2] Sincronizado: ${nombreBot} (Sintético)`);
         } catch (err) {
             console.error(`❌ Error en ${nombreBot}:`, err.message);
         }
@@ -103,10 +107,9 @@ const seedRadar2Only = async () => {
     try {
         await mongoose.connect('mongodb://3.137.140.95:27017/vamped');
         
-        // --- LIMPIEZA QUIRÚRGICA ---
         console.log("🧹 Limpiando registros antiguos del Radar 2 (bots3)...");
-        const deleteRes = await User.deleteMany({ nradar: 2, accountType: 'bot' });
-        console.log(`🗑️ Se eliminaron ${deleteRes.deletedCount} bots antiguos del Radar 2.`);
+        // Limpiamos solo los bots para no borrar humanos reales en el radar 2
+        await User.deleteMany({ nradar: 2, accountType: 'bot', is_human: false });
 
         const hashedPass = await bcrypt.hash('123456', 10);
 

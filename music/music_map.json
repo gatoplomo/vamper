@@ -1,0 +1,39 @@
+{
+    "system": "VAMPER_AUDIO_MAP",
+    "total_tracks": 8,
+    "sectors": {
+        "Jazz": {
+            "sector": "Jazz",
+            "count": 2,
+            "tracks": [
+                "hitslab-jazz-jazz-music-489211.mp3",
+                "tatamusic-jazz-jazz-music-485401.mp3"
+            ]
+        },
+        "Lofi": {
+            "sector": "Lofi",
+            "count": 2,
+            "tracks": [
+                "fassounds-good-night-lofi-cozy-chill-music-160166.mp3",
+                "noobehouse-sunny-ocean-drive-citypop-beat-166601.mp3"
+            ]
+        },
+        "Metal": {
+            "sector": "Metal",
+            "count": 2,
+            "tracks": [
+                "doom-metal-instrumental.mp3",
+                "HeavyDoom.mp3"
+            ]
+        },
+        "Synth": {
+            "sector": "Synth",
+            "count": 2,
+            "tracks": [
+                "tunetank-intense-cyberpunk-techno-music-348920.mp3",
+                "vladislav_zavorin-dark-techno-450565.mp3"
+            ]
+        }
+    },
+    "last_sync": "25/2/2026, 7:23:27"
+}

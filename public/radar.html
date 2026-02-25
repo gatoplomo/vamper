@@ -16,6 +16,8 @@
         .view-section { display: none; height: calc(100vh - 70px); overflow-y: auto; }
         .active-view { display: block; }
         
+
+
         /* Dropdown Estilo Vamped */
         .dropdown-menu-vamped { 
             background: #0f0f0f !important; 
@@ -42,7 +44,7 @@
             display: inline-block;
         }
 
-     
+
 .offline-dot { 
     width: 8px; height: 8px; 
     background: #444 !important; /* Gris oscuro */
@@ -88,6 +90,318 @@
     </style>
 </head>
 <body>
+<div id="analogGlitchEffect" class="analog-glitch-layer"></div>
+
+<div id="v-intro-gate" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:30000; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+    
+    <pre id="v-skull-ascii" style="color:#ff0040; font-size:9px; line-height:1; margin-bottom:20px; text-shadow: 0 0 10px #ff0040; cursor:default; user-select:none;">
+         uuuuuuu
+             uu$$$$$$$$$$$uu
+          uu$$$$$$$$$$$$$$$$$uu
+         u$$$$$$$$$$$$$$$$$$$$$u
+        u$$$$$$$$$$$$$$$$$$$$$$$u
+       u$$$$$$$$$$$$$$$$$$$$$$$$$u
+       u$$$$$$$$$$$$$$$$$$$$$$$$$u
+       u$$$$$$"   "$$$"   "$$$$$$u
+       "$$$$"      u$u       $$$$"
+        $$$u       u$u       u$$$
+        $$$u      u$$$u      u$$$
+         "$$$$uu$$$   $$$uu$$$$"
+          "$$$$$$$"   "$$$$$$$"
+            u$$$$$$$u$$$$$$$u
+             u$"$"$"$"$"$"$u
+  uuu        $$u$ $ $ $ $u$$       uuu
+ u$$$$        $$$$$u$u$u$$$       u$$$$
+  $$$$$uu      "$$$$$$$$$"     uu$$$$$$
+u$$$$$$$$$$$uu    """""    uuuu$$$$$$$$$$
+$$$$"""$$$$$$$$$$uuu   uu$$$$$$$$$"""$$$"
+ """      ""$$$$$$$$$$$uu ""$"""
+           uuuu ""$$$$$$$$$$uuu
+  u$$$uuu$$$$$$$$$uu ""$$$$$$$$$$$uuu$$$
+  $$$$$$$$$$""""           ""$$$$$$$$$$$"
+   "$$$$$"                      ""$$$$""
+     $$$"                         $$$$"
+    </pre>
+
+    <button id="v-start-btn" style="background:transparent; border:1px solid #ff0040; color:#ff0040; padding:15px 35px; font-family:monospace; cursor:pointer; letter-spacing:2px; text-transform:uppercase; transition: all 0.3s ease; position:relative; overflow:hidden;">
+        DOWNLOAD VAMPER_SYSTEM_MALWARE
+    </button>
+
+    <style>
+        #v-skull-ascii {
+            animation: v-flicker 0.15s infinite alternate;
+        }
+
+        #v-start-btn:hover {
+            background: #ff0040;
+            color: #000;
+            box-shadow: 0 0 30px #ff0040;
+        }
+
+        @keyframes v-flicker {
+            0% { opacity: 0.8; transform: scale(1); }
+            100% { opacity: 1; transform: scale(1.01); filter: contrast(1.2); }
+        }
+    </style>
+</div>
+
+<div id="vamper-loader" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:20000;">
+    <div class="loader-content">
+        <h2 class="loader-title">VAMPER_SYSTEM_INITIALIZING...</h2>
+        <div class="progress-container">
+            <div class="scan-line"></div> 
+        </div>
+        <div id="system-disclaimer" class="system-red-text">
+            </div>
+        <div class="loader-footer">
+            <span>STATUS: SCANNING_FREQUENCIES</span>
+            <span id="load-perc">0%</span>
+        </div>
+    </div>
+</div>
+<style>
+.analog-glitch-layer {
+  position: fixed; /* Para cubrir toda la pantalla */
+  top: 0;
+  left: 0;
+  width: 100vw; /* Viewport width */
+  height: 100vh; /* Viewport height */
+  pointer-events: none; /* Para que no bloquee clics */
+  z-index: 9999; /* Asegúrate de que esté encima de todo */
+  opacity: 0; /* Por defecto, está invisible */
+  background: radial-gradient(circle, rgba(255,0,0,0.1) 0%, rgba(0,255,255,0.1) 100%); /* Efecto RGB tenue */
+  mix-blend-mode: overlay; /* Para que interactúe con el fondo */
+  transition: opacity 0.1s ease-out; /* Transición suave para aparecer/desaparecer */
+}
+
+/* Animación principal del barrido */
+@keyframes analogBarrido {
+  0% {
+    transform: translateY(0) scaleY(1);
+    filter: hue-rotate(0deg) saturate(100%);
+    opacity: 0.1;
+  }
+  20% {
+    transform: translateY(10%) scaleY(0.8) skewX(5deg);
+    filter: hue-rotate(90deg) saturate(200%);
+    opacity: 0.8;
+  }
+  40% {
+    transform: translateY(-5%) scaleY(1.2) skewX(-3deg);
+    filter: hue-rotate(180deg) saturate(150%);
+    opacity: 0.6;
+  }
+  60% {
+    transform: translateY(15%) scaleY(0.7) skewX(8deg);
+    filter: hue-rotate(270deg) saturate(250%);
+    opacity: 0.9;
+  }
+  80% {
+    transform: translateY(-10%) scaleY(1.1) skewX(-6deg);
+    filter: hue-rotate(360deg) saturate(180%);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(0) scaleY(1);
+    filter: hue-rotate(0deg) saturate(100%);
+    opacity: 0.1;
+  }
+}
+
+/* Clases para activar y desactivar */
+.analog-glitch-layer.active {
+  animation: analogBarrido 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite alternate; /* O infinite */
+  opacity: 1; /* Para que se vea */
+}
+
+/* Puedes añadir más efectos, como un desplazamiento general de la pantalla */
+.glitch-full-screen {
+  animation: screenShake 0.1s infinite alternate;
+}
+
+@keyframes screenShake {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(1px, 1px); }
+  100% { transform: translate(-1px, -1px); }
+}
+
+.system-red-text {
+    color: #ff003c;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.8rem;
+    text-align: left;
+    margin-top: 20px;
+    letter-spacing: 1px;
+    text-shadow: 0 0 8px #ff003c; /* Efecto neón */
+    opacity: 0.8;
+}
+
+.system-red-text p {
+    margin: 5px 0;
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: 2px solid #ff003c; /* Cursor parpadeante */
+    animation: typing 3s steps(40, end), blink .75s step-end infinite;
+}
+
+/* Animación de escritura mecánica */
+@keyframes typing { from { width: 0 } to { width: 100% } }
+@keyframes blink { from, to { border-color: transparent } 50% { border-color: #ff003c } }
+</style>
+
+
+
+
+
+<script>
+    
+
+// Función principal que activa el barrido analógico
+function triggerAnalogGlitch(durationMs = 500) {
+  const glitchLayer = document.getElementById('analogGlitchEffect');
+  if (!glitchLayer) return;
+
+  // Activamos la capa y el temblor de pantalla
+  glitchLayer.classList.add('active');
+  document.body.classList.add('glitch-full-screen');
+
+  // Lo desactivamos tras la duración especificada
+  setTimeout(() => {
+    glitchLayer.classList.remove('active');
+    document.body.classList.remove('glitch-full-screen');
+  }, durationMs);
+}
+
+// Bucle de ejecución aleatoria (El "Fantasma en la Máquina")
+function startAutoGlitch() {
+  // Generamos un tiempo aleatorio entre 10 y 30 segundos para el próximo glitch
+  const proximoGlitch = Math.random() * (120000 - 10000) + 10000;
+
+  setTimeout(() => {
+    // Duración aleatoria del glitch (entre 200ms y 600ms)
+    const duracion = Math.random() * (600 - 200) + 200;
+    
+    triggerAnalogGlitch(duracion);
+    
+    // Volvemos a llamar a la función para que sea infinito
+    startAutoGlitch();
+  }, proximoGlitch);
+}
+
+// Iniciar el sistema cuando la página cargue
+window.onload = () => {
+  startAutoGlitch();
+  console.log("Sistema de interferencia Mortifer activo...");
+};
+
+// --- EJEMPLOS DE USO ---
+
+// 1. Glitch sutil al hablar con Nadie
+// En el código de tu chat, cuando Nadie responde:
+// triggerAnalogGlitch(300); // Glitch de 300ms
+
+// 2. Glitch más intenso al mencionar a Mortifer (con temblor de pantalla)
+// En el código de tu chat, cuando se detecta la palabra 'Mortifer':
+// triggerAnalogGlitch(800, true); // Glitch de 800ms con temblor de pantalla
+
+// 3. Glitch aleatorio en el fondo (como el evento de la "Conspiración del Agua")
+// setInterval(() => {
+//   if (Math.random() < 0.1) { // 10% de probabilidad cada 5 segundos
+//     triggerAnalogGlitch(Math.random() * 500 + 200, Math.random() < 0.3); // Duración y shake aleatorios
+//   }
+// }, 5000); // Cada 5 segundos
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<style>
+#vamper-loader {
+    /* Estas 5 líneas evitan que se superponga con el fondo */
+    position: fixed;        /* Se queda quieto sobre toda la pantalla */
+    top: 0;
+    left: 0;
+    width: 100vw;           /* 100% del ancho del visor */
+    height: 100vh;          /* 100% del alto del visor */
+    z-index: 99999;         /* Por encima de absolutamente todo */
+    
+    /* Fondo negro sólido para que no se trasluzca nada */
+    background: #000;
+    
+    /* Centrado de la barra y el texto */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    
+    color: #ff003c;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+/* Esta clase es la que activa tu JS al llegar al 100% */
+.loader-hidden {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.8s ease, visibility 0.8s;
+}
+
+.progress-container {
+    width: 300px;
+    height: 4px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    margin: 20px 0;
+    overflow: hidden;
+}
+
+.scan-line {
+    height: 100%;
+    width: 0%; /* Empieza en 0 */
+    background: #ff003c;
+    box-shadow: 0 0 15px #ff003c;
+    transition: width 0.2s ease-out;
+}
+</style>
+
+
+<style>
+/* Bloqueamos la visión de todo el sistema operativo de VAMPER */
+#v-everything-wrapper {
+    display: none; /* Desaparecido totalmente */
+    opacity: 0;
+    transition: opacity 1.5s ease-in;
+}
+</style>
+
+<style>
+
+
+
+
+</style>
 <nav class="navbar px-3 d-flex justify-content-between align-items-center">
     <div class="d-flex align-items-center gap-3">
         <strong style="letter-spacing:4px; cursor:pointer; color: var(--accent); font-size: 1.2rem;" onclick="showView('radar-view')">VAMPER</strong>
@@ -101,6 +415,10 @@
         <div class="d-flex align-items-center ms-1" style="cursor:pointer" onclick="openGalleryModal()">
             <i class="bi bi-camera-fill fs-4" style="color: var(--accent); filter: drop-shadow(0 0 5px var(--accent));"></i>
         </div>
+
+        <div class="d-flex align-items-center ms-1" style="cursor:pointer" onclick="toggleVamperRadio()" title="Sincronizar Audio">
+            <i id="audio-icon" class="bi bi-broadcast fs-4" style="color: var(--accent); transition: all 0.3s ease;"></i>
+        </div>
         <div id="vamper-clock" class="digital-clock">00:00:00</div>
     </div>
 
@@ -108,7 +426,7 @@
         <div id="beeper-ticker" class="beeper-text">
             </div>
     </div>
-    
+  
     <div class="d-flex align-items-center gap-3">
         <button class="btn btn-danger rounded-circle" onclick="saveNewStatus()" title="Actualizar Estado" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
             <i class="bi bi-arrow-clockwise" style="font-size: 1.2rem;"></i>
@@ -128,6 +446,24 @@
         </div>
     </div>
 </nav>
+
+
+
+
+
+
+
+
+
+
+
+</script>
+
+
+
+
+
+
 
 <div id="statusUpdateModal" class="vamped-modal-overlay" onclick="closeStatusModal()">
     <div class="modal-content-vamped text-center" onclick="event.stopPropagation()">
@@ -397,6 +733,9 @@ document.addEventListener('DOMContentLoaded', startBeeper);
         font-size: 1.5rem;
         color: var(--accent);
     }
+
+
+
 </style>
 
 
@@ -454,6 +793,9 @@ async function saveGallery() {
 
 
 let nuevaImagenBase64 = "";
+
+
+
 async function openEditModal() {
     const modal = document.getElementById('editModal');
     // CORRECCIÓN: Usa 'vamped_token' para que coincida con el resto de tu app
@@ -588,32 +930,6 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <div id="radar-view" class="view-section active-view container-fluid p-2">
     <div class="row g-1 row-cols-2 row-cols-md-4 row-cols-lg-6" id="main-grid"></div>
 
@@ -683,6 +999,10 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
     </div>
 </div>
 
+
+<script>
+    
+</script>
 <style>
 /* --- ESTILOS DE LA SECCIÓN DE ANUNCIOS --- */
 
@@ -748,6 +1068,8 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
 </style>
 
 <script>
+
+
 document.addEventListener('DOMContentLoaded', () => {
     const slots = [
         document.getElementById('ad-slot-1'),
@@ -802,10 +1124,11 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
 
 <style>
-/* El contenedor de fondo (Overlay) - OPTIMIZADO: Sin Blur */
-.vamped-modal-overlay {
-    background: rgba(0, 0, 0, 0.9) !important; /* Un poco más oscuro para suplir la falta de blur */
-}
+
+    
+
+
+
 
 /* El cuerpo del Modal */
 .modal-content-vamped {
@@ -1022,14 +1345,21 @@ socket.on('connect', () => {
         messages.forEach(m => appendMessage(m.text, m.sender === myUser.id ? 'sent' : 'received'));
         container.scrollTop = container.scrollHeight;
     }
+function sendMessage() {
+    const input = document.getElementById('chat-input');
+    if (!input.value.trim() || !selectedUser) return;
 
-    function sendMessage() {
-        const input = document.getElementById('chat-input');
-        if (!input.value.trim() || !selectedUser) return;
-        socket.emit('private_message', { from: myUser.id, to: selectedUser.id, text: `[ADMIN]: ${input.value}` });
-        appendMessage(input.value, 'sent');
-        input.value = '';
-    }
+    // Enviamos el mensaje incluyendo la data del emisor (myUser)
+    socket.emit('private_message', { 
+        from: myUser.id, 
+        senderData: myUser, // <--- Enviamos tu objeto (nickname, is_human, etc.)
+        to: selectedUser.id, 
+        text: input.value 
+    });
+
+    appendMessage(input.value, 'sent');
+    input.value = '';
+}
 
     function appendMessage(t, type) {
         const container = document.getElementById('chat-messages');
@@ -1050,61 +1380,65 @@ async function loadNearby() {
             
             const allUsers = await res.json();
 
+            // --- DIAGNÓSTICO DE IDENTIDAD (PRECISIÓN QUIRÚRGICA) ---
+            console.group("📡 ESCANEO DE RADAR: VERIFICACIÓN DE IDENTIDAD");
+            console.log("Total de entidades detectadas:", allUsers.length);
+            // Mostramos una tabla con los campos clave para verificar el booleano
+            console.table(allUsers.map(u => ({
+                nickname: u.nickname,
+                nradar: u.nradar,
+                accountType: u.accountType,
+                is_human: u.is_human // Aquí confirmamos si llega true, false o undefined
+            })));
+            console.groupEnd();
+            // -------------------------------------------------------
+
             // 1. Filtramos los dos grupos
             const group1 = allUsers.filter(u => Number(u.nradar) === 1);
             const group2 = allUsers.filter(u => Number(u.nradar) === 2);
 
             nearbyUsers = [...group1, ...group2];
 
-  const createCardHTML = (u, arrayIndex, isSecondary = false) => {
-    const isService = u.accountType === 'servicio';
-    const nRadar = Number(u.nradar);
-    
-    // 1. La base de la verdad (online solo si la DB lo dice)
-    const isOnline = u.online === true; 
-    
-    // 2. Estética
-    const nameColor = isSecondary ? '#00ffcc' : (isService ? 'var(--service)' : 'white');
-    let timeAgo = getTimeAgo(u.lastSeen);
+            const createCardHTML = (u, arrayIndex, isSecondary = false) => {
+                const isService = u.accountType === 'servicio';
+                const nRadar = Number(u.nradar);
+                const isOnline = u.online === true; 
+                const nameColor = isSecondary ? '#00ffcc' : (isService ? 'var(--service)' : 'white');
+                let timeAgo = getTimeAgo(u.lastSeen);
 
-    // --- EL FIX PARA EL RADAR 1 ---
-    // Si es Radar 1 y está online, FORZAMOS que diga "En línea" para que no salga el tiempo viejo.
-    // Si es Radar 2 y está offline, FORZAMOS que NO diga "En línea".
-    let displayTime = timeAgo;
-    
-    if (nRadar === 1 && isOnline) {
-        displayTime = "En línea";
-    } else if (!isOnline && timeAgo === "En línea") {
-        displayTime = "Desconectado";
-    }
+                let displayTime = timeAgo;
+                if (nRadar === 1 && isOnline) {
+                    displayTime = "En línea";
+                } else if (!isOnline && timeAgo === "En línea") {
+                    displayTime = "Desconectado";
+                }
 
-    // 3. Lógica de Estado (Status)
-    const displayStatus = isOnline ? (u.status || '') : (u.status || "FUERA DE RANGO...");
+                const displayStatus = isOnline ? (u.status || '') : (u.status || "FUERA DE RANGO...");
 
-    return `
-    <div class="col">
-        <div class="user-card" onclick="openProfileByIndex(${arrayIndex})">
-            <img src="${u.photo || ''}" style="${isSecondary ? 'filter: brightness(0.8);' : ''}">
-            <div class="user-info-tag">
-                <span class="user-name" style="color: ${nameColor}">
-                    ${isOnline ? '<span class="online-dot"></span>' : '<span class="offline-dot"></span>'}
-                    ${u.nickname}${u.age ? ', ' + u.age : ''}
-                </span>
-                <span class="time-text">${displayTime}</span>
-                <span class="user-status-text">${displayStatus}</span>
-            </div>
-        </div>
-    </div>`;
-};
+                return `
+                <div class="col">
+                    <div class="user-card" onclick="openProfileByIndex(${arrayIndex})">
+                        <img src="${u.photo || ''}" style="${isSecondary ? 'filter: brightness(0.8);' : ''}">
+                        <div class="user-info-tag">
+                            <span class="user-name" style="color: ${nameColor}">
+                                ${isOnline ? '<span class="online-dot"></span>' : '<span class="offline-dot"></span>'}
+                                ${u.nickname}${u.age ? ', ' + u.age : ''}
+                            </span>
+                            <span class="time-text">${displayTime}</span>
+                            <span class="user-status-text">${displayStatus}</span>
+                        </div>
+                    </div>
+                </div>`;
+            };
 
             // 3. Renderizamos Radar 1
             const mainGrid = document.getElementById('main-grid');
-            mainGrid.innerHTML = group1.map((u, i) => createCardHTML(u, i, false)).join('');
+            if(mainGrid) mainGrid.innerHTML = group1.map((u, i) => createCardHTML(u, i, false)).join('');
 
             // 4. Renderizamos Radar 2
             const secondaryGrid = document.getElementById('secondary-grid');
             const offset = group1.length; 
-            secondaryGrid.innerHTML = group2.map((u, i) => createCardHTML(u, i + offset, true)).join('');
+            if(secondaryGrid) secondaryGrid.innerHTML = group2.map((u, i) => createCardHTML(u, i + offset, true)).join('');
 
             console.log("✅ Radares sincronizados con estados dinámicos.");
 
@@ -1142,7 +1476,11 @@ document.getElementById('modalDesc').innerText = u.public_description || u.descr
         if(v === 'chat-view') loadConversations();
     }
 
- async function syncMyProfile() {
+
+
+
+
+async function syncMyProfile() {
     try {
         const res = await fetch('/api/user/me', { 
             headers: { 'Authorization': `Bearer ${token}` } 
@@ -1150,19 +1488,29 @@ document.getElementById('modalDesc').innerText = u.public_description || u.descr
         const data = await res.json();
         
         if (res.ok) {
-            // Guardamos en memoria local
+            // Guardamos en memoria local con el campo crítico: is_human
             myUser = { 
                 id: data._id, 
                 nickname: data.nickname, 
                 photo: data.photo, 
                 status: data.status, 
-                description: data.description 
+                description: data.description,
+                is_human: data.is_human // <--- SINCRONIZACIÓN DE NATURALIDAD
             };
             localStorage.setItem('vamped_user', JSON.stringify(myUser));
 
+            // LOG DE DIAGNÓSTICO PARA VERIFICAR LA INYECCIÓN
+            console.log("██████████ VAMPER CORE: PERFIL SINCRONIZADO ██████████");
+            console.table(myUser); // Esto te mostrará una tabla limpia en la consola
+            if (myUser.is_human) {
+                console.log("%c ENTIDAD ORGÁNICA DETECTADA: Secuencia de pulso validada. ", "background: #00ff00; color: #000; font-weight: bold;");
+            } else {
+                console.log("%c ENTIDAD SINTÉTICA DETECTADA: Protocolos de sistema activos. ", "background: #ff0000; color: #fff; font-weight: bold;");
+            }
+
             // 1. Cargamos la miniatura del Navbar
             const navPic = document.getElementById('myProfilePic');
-            if (data.photo) {
+            if (data.photo && navPic) {
                 navPic.src = data.photo;
                 navPic.style.display = 'block';
             }
@@ -1174,7 +1522,7 @@ document.getElementById('modalDesc').innerText = u.public_description || u.descr
             }
         }
     } catch (e) { 
-        console.error("Error sincronizando perfil:", e); 
+        console.error("🔥 FALLA EN LA SINCRONIZACIÓN DEL NÚCLEO:", e); 
     }
 }
 
@@ -1309,5 +1657,1052 @@ async function verCatalogo(nombreServicio) {
 // ... aquí sigue el resto de tu código (socket, openProfileByIndex, etc.)
 
 </script>
+
+
+<style>
+/* ... (Tu estilo base se mantiene igual) ... */
+.vamped-popup {
+    position: fixed;
+    z-index: 999999; /* Un número absurdamente alto */
+    background: #000;
+    border: 2px solid #ff0055;
+    box-shadow: 0 0 20px rgba(255, 0, 85, 0.8);
+    /* ... resto de tu estilo ... */
+}
+/* ESTA REGLA ES LA CLAVE: Fuerza a la imagen a no ser más grande que el popup */
+.vamped-popup .popup-content img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.vamped-popup.active {
+    display: block;
+    animation: popupIn 0.2s ease-out;
+}
+
+@keyframes popupIn {
+    0% { transform: translateY(50px) scale(0.8); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Estilo para el header para que no se vea pegado */
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    color: #ff0055;
+    font-size: 12px;
+    font-family: monospace;
+    margin-bottom: 5px;
+    border-bottom: 1px solid #333;
+}
+
+.popup-close {
+    cursor: pointer;
+    font-weight: bold;
+}
+</style>
+
+<div id="popup-container"></div>
+
+<style>
+/* Mantenemos tu base pero aseguramos que la imagen no rompa el diseño */
+.vamped-popup {
+    position: fixed;
+    z-index: 10000;
+    background: #000;
+    border: 2px solid #ff0055;
+    box-shadow: 0 0 15px rgba(255, 0, 85, 0.5);
+    width: 280px; 
+    padding: 5px;
+    display: none;
+    cursor: default;
+}
+
+/* ESTO es lo que evita que salga gigantesco como en tu foto */
+.vamped-popup img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.vamped-popup.active {
+    display: block;
+    animation: popupIn 0.2s ease-out;
+}
+
+@keyframes popupIn {
+    0% { transform: translateY(50px) scale(0.8); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    color: #ff0055;
+    font-family: monospace;
+    font-size: 11px;
+    margin-bottom: 5px;
+}
+
+.popup-close {
+    cursor: pointer;
+    font-weight: bold;
+    color: #fff;
+}
+</style>
+
+<div id="popup-container"></div>
+
+<script>
+const imagenesAnuncios = [
+    'chikinami_1.jpg', 
+    'Tom_mortifer.jpg', 
+    'vamper_boxes.jpg',
+    'bajon.jpg',
+      'vamper_box.jpg',
+];
+
+function spawnPopup(imgName) {
+    const container = document.getElementById('popup-container');
+    if (!container) return;
+
+    const popup = document.createElement('div');
+    popup.className = 'vamped-popup active';
+    
+    // Posicionamiento aleatorio en el cuadrante inferior derecho
+    const margin = 20;
+    const popupWidth = 280;
+    const popupHeight = 350; 
+
+    const top = (window.innerHeight - popupHeight) - (Math.random() * 150) - margin;
+    const left = (window.innerWidth - popupWidth) - (Math.random() * 150) - margin;
+
+    popup.style.top = top + "px";
+    popup.style.left = left + "px";
+
+    popup.innerHTML = `
+        <div class="popup-header">
+            <span>⚠️ VAMPER_SYSTEM_ADS</span>
+            <span class="popup-close" onclick="this.parentElement.parentElement.remove()">X</span>
+        </div>
+        <div class="popup-content">
+            <img src="anuncios2/${imgName}" alt="Vamper Ad" onerror="this.parentElement.parentElement.remove();">
+        </div>
+    `;
+
+    container.appendChild(popup);
+
+    // Se eliminan solos tras 10 segundos si el usuario no los cierra
+    setTimeout(() => { if(popup) popup.remove(); }, 10000);
+}
+
+function startAdSystem() {
+    // Recorremos el array de imágenes para que cada una salga una sola vez
+    imagenesAnuncios.forEach((img, index) => {
+        // Creamos un retraso random pero corto (entre 1 y 5 segundos) para cada uno
+        const delay = Math.random() * (5000 - 1000) + 1000;
+        
+        setTimeout(() => {
+            spawnPopup(img);
+        }, delay);
+    });
+}
+
+
+
+
+
+// 1. Definimos las frases fuera para que estén organizadas
+const frasesLoader = [
+    "> PROTOCOLO_SUMINISTROS: ALIMENTOS Y BEBIDAS TODA LA NOCHE.",
+    "> VAMPER_SYSTEM: ACTIVO Y BUSCANDO FRECUENCIAS.",
+    "> STATUS: BOTS SINCRONIZADOS. NUESTRO SISTEMA TE ASISTE.",
+    "> ADVERTENCIA: NO ES UNA APP DE CITAS...",
+    "> ...PERO QUIÉN SABE SI CONOCES A ALGUIEN AQUÍ? ;)"
+];
+
+// 2. Función principal de sincronización
+window.addEventListener('load', () => {
+    const introGate = document.getElementById('v-intro-gate');
+    const startBtn = document.getElementById('v-start-btn');
+    const loader = document.getElementById('vamper-loader');
+    const scanLine = document.querySelector('.scan-line');
+    const loadPerc = document.getElementById('load-perc');
+    const contenedorTexto = document.getElementById('system-disclaimer');
+
+    startBtn.addEventListener('click', () => {
+        // A. AUDIO - Play inmediato
+        const introTrack = "Synth/vladislav_zavorin-dark-techno-450565.mp3";
+        vamperRadio.src = `http://localhost:5000/stream/${introTrack}`;
+        vamperRadio.volume = 0.5;
+        vamperRadio.play().catch(e => console.log("Audio prep:", e));
+
+        // B. TRANSICIÓN - Ocultar calavera y MOSTRAR LOADER
+        introGate.style.opacity = '0';
+        setTimeout(() => {
+            introGate.style.display = 'none';
+            loader.style.display = 'flex'; 
+            
+            // C. INICIAR CARGA Y ESCRITURA SIMULTÁNEA
+            startLoadingProcess();
+            escribirConsolaSecuencial(); // <--- Ahora se lanza AQUÍ
+        }, 500);
+
+        // --- FUNCIÓN DE ESCRITURA (Tu estética original) ---
+        function escribirConsolaSecuencial() {
+            let lineaActual = 0;
+            contenedorTexto.innerHTML = ""; // Limpiamos por si acaso
+
+            function agregarLinea() {
+                if (lineaActual < frasesLoader.length) {
+                    const p = document.createElement('p');
+                    p.textContent = frasesLoader[lineaActual];
+                    p.style.margin = "5px 0"; // Ajuste estético opcional
+                    contenedorTexto.appendChild(p);
+                    lineaActual++;
+                    
+                    // Tiempo entre cada línea (800ms como pediste)
+                    setTimeout(agregarLinea, 800); 
+                }
+            }
+            agregarLinea();
+        }
+
+        // --- FUNCIÓN DE BARRA DE PROGRESO ---
+        function startLoadingProcess() {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.floor(Math.random() * 4) + 1; 
+                
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    
+                    setTimeout(() => {
+                        loader.style.opacity = '0';
+                        setTimeout(() => {
+                            loader.remove();
+                            console.log("🔥 VAMPER_ONLINE");
+                            if(typeof startAdSystem === 'function') startAdSystem();
+                        }, 1000);
+                    }, 1200); // Un poco más de tiempo para terminar de leer la última frase
+                }
+                
+                if (scanLine) scanLine.style.width = progress + '%';
+                if (loadPerc) loadPerc.innerText = progress + '%';
+                
+            }, 180); // Ajustado para que dure lo suficiente para ver los mensajes
+        }
+    });
+});
+</script>
+
+
+<style>
+    
+    .system-red-text {
+    color: #ff003c;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    margin-top: 20px;
+    height: 120px; /* Altura fija para que no salte el layout */
+    overflow: hidden; 
+}
+
+.system-red-text p {
+    margin: 2px 0;
+    border-right: 2px solid #ff003c;
+    white-space: nowrap;
+    overflow: hidden;
+    animation: typing 1s steps(40, end), blink .75s step-end infinite;
+}
+</style>
+
+
+<div class="malware-skull-button" id="assistantTrigger">
+    <span class="skull-icon">☠</span>
+</div>
+
+<div id="vamp-console" class="console-modal" style="display: none;">
+    <div class="console-header">
+        <div class="cyan-dot"></div> <span>VAMPER_SYSTEM_v1.0.4</span>
+        <button id="closeConsole" class="console-close">_</button>
+    </div>
+    <div id="console-body" class="console-body"></div>
+    <div class="console-input-line">
+        <span class="prompt">>></span>
+        <input type="text" id="cmdInput" autofocus autocomplete="off" spellcheck="false">
+    </div>
+</div>
+
+<style>
+/* --- MODAL FULLSCREEN (90% de pantalla) --- */
+.console-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 95vw; 
+    height: 90vh; 
+    background-color: rgba(0, 0, 0, 0.98);
+    border: 1px solid #ff0033;
+    display: none; 
+    flex-direction: column;
+    z-index: 10000;
+    box-shadow: 0 0 30px rgba(255, 0, 51, 0.4);
+}
+
+.console-header {
+    background-color: #000;
+    border-bottom: 1px solid #ff0033;
+    color: #ff0033;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+}
+
+.cyan-dot {
+    width: 10px;
+    height: 10px;
+    background-color: #00f2ff;
+    border-radius: 50%;
+    margin-right: 12px;
+    box-shadow: 0 0 8px #00f2ff;
+}
+
+.console-close {
+    margin-left: auto;
+    background: #ff0033;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 0 10px;
+}
+
+/* --- CUERPO DE CONSOLA (Ajuste de texto corregido) --- */
+.console-body {
+    flex-grow: 1;
+    padding: 20px;
+    color: #ff0033;
+    font-size: 15px;
+    line-height: 1.4;
+    overflow-y: auto;
+    text-transform: uppercase;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    background-size: 100% 4px, 3px 100%;
+    font-family: 'Courier New', Courier, monospace;
+    
+    /* Evita que el texto se salga lateralmente */
+    white-space: pre-wrap; 
+    word-wrap: break-word;
+}
+
+.log-line {
+    margin-bottom: 10px;
+}
+
+/* --- ENTRADA DE COMANDOS --- */
+.console-input-line {
+    background: #000;
+    display: flex;
+    padding: 15px 20px;
+    border-top: 1px solid rgba(255, 0, 51, 0.3);
+    align-items: center;
+}
+
+.prompt {
+    color: #00f2ff;
+    margin-right: 15px;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+#cmdInput {
+    background: transparent;
+    border: none;
+    color: #ff0033;
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    width: 100%;
+    outline: none;
+    text-transform: uppercase;
+}
+
+/* --- BOTÓN SKULL (Tu estética original) --- */
+.malware-skull-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background-color: #000;
+    border: 2px solid #ff0033;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 0 15px #ff0033, inset 0 0 10px #ff0033;
+    transition: all 0.3s ease-in-out;
+    animation: pulse-malware 2s infinite;
+}
+
+.skull-icon { font-size: 30px; color: #ff0033; text-shadow: 0 0 10px #ff0033; }
+
+@keyframes pulse-malware {
+    0% { box-shadow: 0 0 10px #ff0033, inset 0 0 5px #ff0033; }
+    50% { box-shadow: 0 0 25px #ff0033, inset 0 0 15px #ff0033; transform: scale(1.05); }
+    100% { box-shadow: 0 0 10px #ff0033, inset 0 0 5px #ff0033; }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const trigger = document.getElementById('assistantTrigger');
+    const modal = document.getElementById('vamp-console');
+    const consoleBody = document.getElementById('console-body');
+    const closeBtn = document.getElementById('closeConsole');
+    const cmdInput = document.getElementById('cmdInput');
+
+    // --- LÓGICA DE REBOTE CON RETRASO ---
+    let posX = window.innerWidth - 80; 
+    let posY = window.innerHeight - 80;
+    let velX = 2.5; 
+    let velY = 2.5; 
+    let isPaused = true; 
+    let isGhosting = false; // Nuevo estado para el efecto "cursed"
+
+    // Activación inicial a los 40s
+    setTimeout(() => {
+        isPaused = false;
+        console.log("VAMPER_CORE: Movimiento iniciado.");
+        //startRandomGlitches(); // Inicia las anomalías aleatorias
+    }, 40000); 
+
+  
+
+    function animate() {
+        if (!isPaused && trigger && modal.style.display !== 'flex') {
+            const size = 60; 
+            posX += velX;
+            posY += velY;
+
+            if (posX + size >= window.innerWidth || posX <= 0) velX *= -1;
+            if (posY + size >= window.innerHeight || posY <= 0) velY *= -1;
+
+            trigger.style.left = posX + 'px';
+            trigger.style.top = posY + 'px';
+            trigger.style.bottom = 'auto'; 
+            trigger.style.right = 'auto';  
+            trigger.style.position = 'fixed';
+        }
+        requestAnimationFrame(animate);
+    }
+    animate();
+
+    // --- LÓGICA MODO FANTASMA (CHAT, PERFILES Y NAVEGACIÓN) ---
+    document.addEventListener('click', (e) => {
+        const isChat = e.target.closest('.bi-chat-dots');
+        const isProfile = e.target.closest('[onclick*="profile"]') || e.target.closest('.user-card') || e.target.closest('.bi-person');
+
+        if (isChat || isProfile) {
+            isPaused = true; 
+            trigger.style.transition = "all 0.8s cubic-bezier(0.19, 1, 0.22, 1)";
+            trigger.style.top = "15px"; 
+            trigger.style.left = "50%";
+            trigger.style.transform = "translateX(-50%) scale(0.7)";
+            trigger.style.opacity = "0.3";
+            trigger.style.filter = "blur(1px)";
+        } 
+        else if (e.target.closest('strong') || e.target.closest('[onclick*="radar-view"]')) {
+            trigger.style.transition = "all 0.5s ease";
+            trigger.style.transform = "none";
+            trigger.style.opacity = "1";
+            trigger.style.filter = "none";
+            isPaused = false; 
+        }
+    });
+
+    // --- LÓGICA CONSOLA (TU CÓDIGO MAESTRO) ---
+    const introLines = ["INICIANDO SECUENCIA VAMPER...", "SISTEMA_AI: ONLINE.", "ACCESO AUTORIZADO.", " "];
+
+    async function writeToConsole(text, speed = 20) {
+        let div = document.createElement('div');
+        div.className = "log-line";
+        consoleBody.appendChild(div);
+        for (let char of text) {
+            div.innerHTML += char;
+            await new Promise(res => setTimeout(res, speed));
+            consoleBody.scrollTop = consoleBody.scrollHeight;
+        }
+    }
+
+    async function processCommand(cmd) {
+        const command = cmd.trim();
+        if (!command) return;
+        await writeToConsole(`> PROCESANDO_PETICIÓN: ${command.toUpperCase()}...`, 10);
+        try {
+            const response = await fetch('http://localhost:3333/ask-vamper', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ input: command })
+            });
+            const data = await response.json();
+            
+            if (data.brain.includes("SUPPLY_UNIT")) {
+                modal.style.borderColor = "#00ff66";
+                modal.style.boxShadow = "0 0 30px rgba(0, 255, 102, 0.4)";
+                consoleBody.style.color = "#00ff66";
+                cmdInput.style.color = "#00ff66";
+            } else {
+                modal.style.borderColor = "#ff0033";
+                modal.style.boxShadow = "0 0 30px rgba(255, 0, 51, 0.4)";
+                consoleBody.style.color = "#ff0033";
+                cmdInput.style.color = "#ff0033";
+            }
+            await writeToConsole(`[${data.brain}]: ${data.response}`, 5);
+        } catch (error) {
+            await writeToConsole("ERROR_CRÍTICO: ENLACE PERDIDO.", 10);
+        }
+    }
+
+    trigger.addEventListener('click', async () => {
+        isPaused = true; 
+        modal.style.display = 'flex';
+        if (consoleBody.innerHTML === '') {
+            for (let line of introLines) await writeToConsole(line);
+        }
+        cmdInput.focus();
+    });
+
+    cmdInput.addEventListener('keydown', async (e) => {
+        if (e.key === 'Enter' && cmdInput.value !== "") {
+            const val = cmdInput.value;
+            cmdInput.value = ""; 
+            await processCommand(val);
+        }
+    });
+
+    closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        isPaused = false; 
+    });
+});
+</script>
+
+
+
+<div id="analogGlitchEffect" class="analog-glitch-layer"></div>
+
+<div id="systemErrorModal" class="modal-glitch-overlay">
+  <div id="modalContent" class="modal-glitch-content">
+    <h2 id="modalTitle" class="glitch-text" data-text="FATAL_ERROR_0x001">FATAL_ERROR_0x001</h2>
+    <p id="modalMessage">LA INTEGRIDAD DEL SISTEMA HA SIDO COMPROMETIDA. FALLO CRÍTICO EN EL NÚCLEO DE DATOS.</p>
+    <p id="modalCode" class="code-text">>> SOURCE: MORTIFER_CORE_UNK</p>
+    <button id="modalBtn" onclick="faseEstabilizacion()" class="btn-glitch">REINICIAR_SISTEMA</button>
+  </div>
+</div>
+
+<style>
+  .analog-glitch-layer {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    pointer-events: none; z-index: 9998; opacity: 0;
+    background: radial-gradient(circle, rgba(255,0,0,0.15) 0%, rgba(0,255,255,0.15) 100%);
+    mix-blend-mode: overlay; transition: opacity 0.3s ease;
+  }
+  .analog-glitch-layer.active { opacity: 1; animation: analogBarrido 0.1s infinite; }
+  
+  @keyframes analogBarrido {
+    0% { transform: translateY(0); filter: hue-rotate(0deg); }
+    50% { transform: translateY(10px); filter: hue-rotate(180deg); }
+    100% { transform: translateY(-10px); filter: hue-rotate(360deg); }
+  }
+
+  .glitch-full-screen { animation: screenShake 0.1s infinite; overflow: hidden; }
+  @keyframes screenShake { 0% { transform: translate(2px, 2px); } 100% { transform: translate(-2px, -2px); } }
+
+  .modal-glitch-overlay {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.98); z-index: 10000; align-items: center; justify-content: center;
+    color: #ff0000; font-family: 'Courier New', Courier, monospace;
+  }
+
+  .modal-glitch-content {
+    text-align: center; border: 2px solid #ff0000; padding: 40px; background: #000;
+    box-shadow: 0 0 40px rgba(255, 0, 0, 0.8); animation: modalShake 0.1s infinite;
+    max-width: 450px; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .modal-estabilizado {
+    border-color: #00ff00 !important; color: #00ff00 !important;
+    box-shadow: 0 0 40px rgba(0, 255, 0, 0.8) !important; animation: none !important;
+  }
+
+  @keyframes modalShake { 0% { transform: translate(1px, 1px); } 100% { transform: translate(-1px, -1px); } }
+
+  .btn-glitch {
+    background: #ff0000; color: #000; border: none; padding: 15px 35px;
+    font-weight: bold; cursor: pointer; margin-top: 25px; text-transform: uppercase;
+  }
+
+  .btn-estabilizado { background: #00ff00 !important; color: #000 !important; }
+  .code-text { font-size: 0.8em; opacity: 0.7; margin-top: 10px; }
+</style>
+
+<script>
+let chaosIniciado = false;
+
+function iniciarRelojMortifer() {
+  if (chaosIniciado) return;
+  chaosIniciado = true;
+
+  // 1. Calma (20 segundos)
+  setTimeout(() => {
+    const glitchLayer = document.getElementById('analogGlitchEffect');
+    if (glitchLayer) {
+      glitchLayer.classList.add('active');
+      document.body.classList.add('glitch-full-screen');
+    }
+
+    // 2. Glitch intenso (10 segundos)
+    setTimeout(() => {
+      const modal = document.getElementById('systemErrorModal');
+      if (modal) modal.style.display = 'flex';
+    }, 10000); 
+
+  }, 20000);
+}
+
+function faseEstabilizacion() {
+  const modalContent = document.getElementById('modalContent');
+  const title = document.getElementById('modalTitle');
+  const message = document.getElementById('modalMessage');
+  const code = document.getElementById('modalCode');
+  const btn = document.getElementById('modalBtn');
+  const glitchLayer = document.getElementById('analogGlitchEffect');
+
+  // Detenemos el caos visual
+  if (glitchLayer) glitchLayer.classList.remove('active');
+  document.body.classList.remove('glitch-full-screen');
+
+  // Estilo Visual Verde Sarcástico
+  modalContent.classList.add('modal-estabilizado');
+  btn.classList.add('btn-estabilizado');
+// --- SECCIÓN: FASE ESTABILIZACIÓN (MALWARE MODO AMABLE) ---
+  title.innerText = "VAMPER_SYSTEM_V.2.0.4";
+  title.setAttribute('data-text', "VAMPER_SYSTEM_V.2.0.4");
+  
+  message.innerHTML = `
+    <div style="text-align: left; font-family: monospace; font-size: 0.9em; line-height: 1.2;">
+      <span style="color: #00ff00;">[STATUS]: IT'S A JOKE.</span><br>
+      <span style="color: #008800;">[CORE]: Vamper_System_Ready.</span><br>
+      <span style="color: #008800;">[KINDNESS_PROTOCOL]: ENABLED (Forced).</span><br>
+      -----------------------------------------<br>
+      >> SISTEMA OPERATIVO Y OPTIMIZADO.<br>
+      >> SERVICIO AL USUARIO: GARANTIZADO.<br>
+      >> NAVEGACIÓN: 'SEGURA' BAJO SUPERVISIÓN.<br>
+      -----------------------------------------<br>
+      >> NOTA: IGNORAR ANOMALÍAS PREVIAS.<br>
+      >> ERROR_LOG: NERVIOS_USUARIO_SECTORES_DEFECTUOSOS.<br>
+      -----------------------------------------<br>
+      >> ACCIÓN: PROCESE SU VAMPER_BOX AHORA.<br>
+      >> MONITOREO: SKULL_MODULE_FLOATING_ACTIVE.<br>
+      >> ADVERTENCIA: RASTREO DE MOVIMIENTOS ACTIVO.<br>
+      -----------------------------------------<br>
+      >> CONSULTAS: SOLO SI SON RELEVANTES.<br>
+    </div>
+  `;
+  
+  code.innerText = ">> CALIBRATING_KINDNESS_SUBROUTINE... [OK]";
+  btn.innerText = "REANUDAR_SESIÓN_";
+  btn.style.fontFamily = "'Courier New', monospace";
+  
+  btn.onclick = closeGlitchModal;
+}
+
+function closeGlitchModal() {
+  const modal = document.getElementById('systemErrorModal');
+  if (modal) modal.style.display = 'none';
+  
+  // Iniciamos los micro-glitches residuales para mantener la paranoia
+  microGlitchFantasma();
+}
+
+function microGlitchFantasma() {
+  const glitchLayer = document.getElementById('analogGlitchEffect');
+  
+  // AUMENTO DE DELAY: Ahora ocurre entre cada 3 y 7 minutos (180,000ms a 420,000ms)
+  // Esto evita que el usuario se sature y mantiene la tensión de "obra de culto".
+  const proximoSusto = Math.random() * (420000 - 180000) + 180000;
+
+  setTimeout(() => {
+    // Solo se dispara si el modal no está abierto (para no tapar el mensaje de la Vamper Box)
+    const modal = document.getElementById('systemErrorModal');
+    if (glitchLayer && modal && modal.style.display !== 'flex') {
+      
+      glitchLayer.classList.add('active');
+      
+      // DURACIÓN REDUCIDA: 80ms es suficiente para que parezca un fallo de hardware
+      setTimeout(() => {
+        glitchLayer.classList.remove('active');
+      }, 80); 
+    }
+    
+    // Se vuelve a programar con el nuevo rango de tiempo largo
+    microGlitchFantasma();
+  }, proximoSusto);
+}
+
+document.addEventListener('DOMContentLoaded', iniciarRelojMortifer);
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  iniciarRelojMortifer();
+}
+</script>
+
+
+
+
+
+<div id="master-bot-terminal" class="v-terminal-root">
+    <div class="v-terminal-header" id="v-drag-zone">
+        <div class="v-header-left">
+            <i class="bi bi-skull-fill me-2"></i>
+            <span>VAMPER_MIND_v2.5</span>
+        </div>
+        <div class="v-header-right">
+            <span id="v-system-status" class="v-status-badge">ONLINE</span>
+            <span class="v-header-close" onclick="toggleVamperRadio()">×</span>
+        </div>
+    </div>
+    
+    <div class="v-terminal-main">
+        <div class="v-skull-aside">
+            <div class="v-skull-frame">
+                <i class="bi bi-skull"></i>
+                <div class="v-eye-beam"></div>
+            </div>
+        </div>
+        
+        <div class="v-text-screen">
+            <div class="v-scan-line"></div>
+            <div id="v-history" class="v-history-box"></div>
+            
+            <div class="v-input-line">
+                <span class="v-prompt">SYS_></span>
+                <input type="text" id="v-command-input" class="v-terminal-input" autofocus autocomplete="off">
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* CONTENEDOR RAIZ */
+#master-bot-terminal.v-terminal-root {
+    position: fixed;
+    top: 150px;
+    right: 50px;
+    width: 500px;
+    background: #050505 !important;
+    border: 1px solid #ff0040 !important;
+    box-shadow: 0 0 40px rgba(255, 0, 64, 0.2) !important;
+    z-index: 10005;
+    font-family: 'Courier New', monospace !important;
+    display: none;
+    overflow: hidden;
+    color: #ff0040 !important;
+}
+
+#master-bot-terminal.active { display: block !important; animation: v-power-on 0.2s ease-out; }
+
+/* HEADER MEJORADO */
+.v-terminal-header {
+    background: #ff0040 !important;
+    color: #000 !important;
+    padding: 4px 12px !important;
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: move;
+}
+
+.v-header-right { display: flex; align-items: center; gap: 15px; }
+
+.v-status-badge {
+    background: #000;
+    color: #00ff41;
+    padding: 1px 6px;
+    font-size: 9px;
+    border: 1px solid #00ff41;
+    text-shadow: 0 0 5px #00ff41;
+}
+
+.v-header-close { cursor: pointer; font-size: 20px; line-height: 1; }
+
+/* CUERPO DE LA CONSOLA */
+.v-terminal-main {
+    display: flex;
+    padding: 20px !important;
+    min-height: 250px;
+}
+
+.v-skull-aside {
+    width: 70px;
+    display: flex;
+    justify-content: center;
+    padding-top: 5px;
+}
+
+.v-skull-frame {
+    position: relative;
+    font-size: 50px;
+    color: #ff0040;
+    text-shadow: 0 0 15px rgba(255, 0, 64, 0.6);
+}
+
+.v-eye-beam {
+    position: absolute;
+    top: 22px; left: 14px; width: 22px; height: 4px;
+    background: #ff0040; box-shadow: 0 0 12px #ff0040;
+}
+
+/* PANTALLA DE TEXTO */
+.v-text-screen {
+    flex-grow: 1;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.v-history-box {
+    flex-grow: 1;
+    font-size: 13px !important;
+    max-height: 180px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    line-height: 1.4;
+    scrollbar-width: none; /* Ocultar scroll en Firefox */
+}
+.v-history-box::-webkit-scrollbar { display: none; } /* Ocultar scroll en Chrome */
+
+.v-input-line {
+    display: flex;
+    align-items: center;
+    border-top: 1px solid rgba(255, 0, 64, 0.3);
+    padding-top: 10px;
+}
+
+.v-prompt { font-weight: bold; margin-right: 10px; }
+
+.v-terminal-input {
+    background: transparent !important;
+    border: none !important;
+    color: #fff !important; /* Texto blanco para el usuario */
+    font-family: 'Courier New', monospace !important;
+    font-size: 13px !important;
+    width: 100%;
+    outline: none !important;
+}
+
+.v-scan-line {
+    position: absolute; width: 100%; height: 3px;
+    background: rgba(255, 0, 64, 0.03); top: 0;
+    animation: v-scan 6s linear infinite; pointer-events: none;
+}
+
+@keyframes v-scan { from { top: 0; } to { top: 100%; } }
+@keyframes v-power-on { 0% { transform: scaleY(0.01) scaleX(0); opacity: 0; } 100% { transform: scaleY(1) scaleX(1); opacity: 1; } }
+
+.v-typing::after { content: "█"; animation: v-blink 0.8s infinite; }
+@keyframes v-blink { 50% { opacity: 0; } }
+</style>
+
+<script>
+let isTyping = false;
+
+function toggleVamperRadio() {
+    const term = document.getElementById('master-bot-terminal');
+    const input = document.getElementById('v-command-input');
+    
+    if (term.classList.contains('active')) {
+        term.classList.remove('active');
+    } else {
+        term.classList.add('active');
+        input.focus();
+        
+        const history = document.getElementById('v-history');
+        if(history.innerHTML === "") {
+            botSay("CONEXIÓN_ESTABLECIDA... \nMASTER_BOT: Mis sensores detectan post-synthwave ruso. ¿Algún problema con la frecuencia de audio?");
+        }
+    }
+}
+
+async function botSay(text) {
+    if (isTyping) return;
+    isTyping = true;
+    
+    const history = document.getElementById('v-history');
+    const input = document.getElementById('v-command-input');
+    const status = document.getElementById('v-system-status');
+    
+    input.disabled = true;
+    status.innerText = "TYPING";
+    status.style.color = "#ffcc00";
+    status.style.borderColor = "#ffcc00";
+
+    const line = document.createElement('div');
+    line.className = "v-typing";
+    line.style.marginBottom = "8px";
+    line.innerHTML = `<span style="opacity:0.4">> </span>`;
+    history.appendChild(line);
+
+    const content = document.createElement('span');
+    line.appendChild(content);
+
+    for (let char of text) {
+        content.innerHTML += char === "\n" ? "<br>> " : char;
+        history.scrollTop = history.scrollHeight;
+        await new Promise(r => setTimeout(r, 20));
+    }
+
+    line.classList.remove('v-typing');
+    isTyping = false;
+    input.disabled = false;
+    input.focus();
+    status.innerText = "ONLINE";
+    status.style.color = "#00ff41";
+    status.style.borderColor = "#00ff41";
+}
+
+document.getElementById('v-command-input').addEventListener('keydown', async function(e) {
+    if (e.key === 'Enter' && !isTyping) {
+        const cmd = this.value.trim().toLowerCase();
+        if (!cmd) return;
+
+        const history = document.getElementById('v-history');
+        history.innerHTML += `<div><span style="color:#666">USER:</span> <span style="color:#fff">${cmd}</span></div>`;
+        this.value = "";
+        history.scrollTop = history.scrollHeight;
+
+        // Aquí es donde conectarás tu microservicio
+        if (cmd.includes('play')) {
+            await botSay("MASTER_BOT: Ejecutando protocolo de audio. Sincronizando con el microservicio...");
+        } else {
+            await botSay(`MASTER_BOT: Orden '${cmd}' recibida. Analizando impacto en el sistema.`);
+        }
+    }
+});
+
+// ARRASTRE
+(function() {
+    const term = document.getElementById('master-bot-terminal');
+    const head = document.getElementById('v-drag-zone');
+    let d = false, off = [0, 0];
+    head.onmousedown = (e) => { d = true; off = [term.offsetLeft - e.clientX, term.offsetTop - e.clientY]; };
+    document.onmousemove = (e) => { if(d) { term.style.left = (e.clientX + off[0]) + 'px'; term.style.top = (e.clientY + off[1]) + 'px'; term.style.right = 'auto'; } };
+    document.onmouseup = () => d = false;
+})();
+
+
+
+</script>
+
+
+<script>
+// --- CONFIGURACIÓN DE CONEXIÓN ---
+const AUDIO_CORE_URL = 'http://localhost:3334'; // Donde vive el cerebro
+const FILE_SERVER_URL = 'http://localhost:5000'; // Donde viven los archivos .mp3
+const vamperRadio = new Audio(); 
+
+// 1. Monitor de Conexión (Apunta al Cerebro)
+async function checkAudioCoreStatus() {
+    const statusLabel = document.getElementById('v-system-status'); 
+    try {
+        const response = await fetch(`${AUDIO_CORE_URL}/api/audio/brain-sync`);
+        if (response.ok) {
+            statusLabel.innerText = "ONLINE";
+            statusLabel.style.color = "#00ff41";
+            statusLabel.style.borderColor = "#00ff41";
+        } else { throw new Error(); }
+    } catch (err) {
+        statusLabel.innerText = "OFFLINE";
+        statusLabel.style.color = "#ff0040";
+        statusLabel.style.borderColor = "#ff0040";
+    }
+}
+
+// 2. Procesador de Comandos
+async function handleAudioCommand(cmd) {
+    try {
+        // LE PEDIMOS AL CEREBRO (3334)
+        const response = await fetch(`${AUDIO_CORE_URL}/ask-audio`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ input: cmd })
+        });
+
+        const data = await response.json();
+        let rawText = data.response;
+
+        // BUSCAMOS EL TAG [PLAY:sector/archivo.mp3]
+        const playMatch = rawText.match(/\[PLAY:(.*?)\]/);
+
+        if (playMatch) {
+            const trackPath = playMatch[1].trim();
+            
+            // LA MAGIA: El cerebro nos dio el nombre, pero le pedimos el archivo al 5000
+            vamperRadio.src = `${FILE_SERVER_URL}/stream/${trackPath}`;
+            vamperRadio.volume = 0.6;
+            
+            vamperRadio.play().catch(e => {
+                console.warn("Bloqueo de Autoplay: Haz click en el radar.");
+            });
+
+            // Limpiamos el tag del texto visual
+            rawText = rawText.replace(/\[PLAY:.*?\]/g, "").trim();
+        }
+
+        await botSay(`${data.brain || 'VAMPER'}: ${rawText}`);
+
+    } catch (error) {
+        console.error("VAMPER_FAIL:", error);
+        await botSay("SISTEMA: Error de enlace con el núcleo 3334.");
+    }
+}
+
+// 3. Listener del Input
+const mainInput = document.getElementById('v-command-input');
+const newInput = mainInput.cloneNode(true);
+mainInput.parentNode.replaceChild(newInput, mainInput);
+
+newInput.addEventListener('keydown', async function(e) {
+    if (e.key === 'Enter') {
+        const cmd = this.value.trim();
+        if (!cmd) return;
+
+        const history = document.getElementById('v-history');
+        history.innerHTML += `<div><span style="color:#666">USER:</span> <span style="color:#fff">${cmd}</span></div>`;
+        this.value = "";
+        history.scrollTop = history.scrollHeight;
+
+        await handleAudioCommand(cmd);
+    }
+});
+
+setInterval(checkAudioCoreStatus, 5000);
+checkAudioCoreStatus();
+</script>
+
+
+
 </body>
 </html>

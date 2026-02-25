@@ -6,7 +6,7 @@
     <title>VAMPER | The Club</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #050505;
@@ -14,6 +14,7 @@
             --accent: #ff0040;
             --text: #ffffff;
             --input-border: #222;
+            --terminal: #00ff88;
         }
 
         body, html {
@@ -21,13 +22,41 @@
             background-color: var(--bg);
             font-family: 'Inter', sans-serif;
             overflow: hidden;
+            color: white;
         }
 
+        /* --- CAPA MALWARE & GLITCH --- */
+        #malware-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #000;
+            display: none; justify-content: center; align-items: center;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        .malware-skull {
+            width: 100vw; height: 100vh;
+            background: url('/img/skull.jpg'); 
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            filter: contrast(1.5) brightness(0.8) drop-shadow(0 0 50px #ff0000);
+        }
+
+        .shake-effect { animation: violent-shake 0.05s infinite; }
+
+        @keyframes violent-shake {
+            0% { transform: translate(10px, 10px) scale(1.05); }
+            25% { transform: translate(-10px, -20px) scale(1); }
+            50% { transform: translate(-20px, 10px) scale(1.1); }
+            75% { transform: translate(5px, -5px) scale(1); }
+            100% { transform: translate(0, 0) scale(1.05); }
+        }
+
+        /* --- UI PRINCIPAL --- */
         #bg-video {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: -3; object-fit: cover;
-            filter: brightness(0.2) contrast(1.2);
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -3; object-fit: cover; filter: brightness(0.2) contrast(1.2);
         }
 
         #hero-entrance {
@@ -42,6 +71,7 @@
             letter-spacing: 25px; font-weight: 800; color: #fff;
             text-shadow: 0 0 20px var(--accent); margin-bottom: 0.5rem;
             animation: glow 4s infinite ease-in-out;
+            cursor: crosshair;
         }
 
         @keyframes glow {
@@ -49,228 +79,175 @@
             50% { text-shadow: 0 0 50px var(--accent), 0 0 10px #fff; opacity: 0.8; }
         }
 
-        /* NEÓN ROJO VAMPER */
-        .neon-vamp {
-            font-size: 2rem;
-            letter-spacing: 10px;
-            margin: 0;
-            color: #fff;
-            font-weight: 800;
-            text-transform: uppercase;
-            text-shadow: 
-                0 0 5px #fff,
-                0 0 10px #fff,
-                0 0 20px var(--accent),
-                0 0 30px var(--accent),
-                0 0 40px var(--accent);
-            animation: neonPulse 1.5s infinite alternate;
-        }
-
-        @keyframes neonPulse {
-            from { opacity: 0.8; text-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent); }
-            to { opacity: 1; text-shadow: 0 0 15px var(--accent), 0 0 35px var(--accent), 0 0 10px #fff; }
-        }
-
         .hero-subtitle { font-size: 0.75rem; letter-spacing: 12px; text-transform: uppercase; font-weight: 400; margin: 0; }
         .hero-subtitle.top { color: rgba(255, 255, 255, 0.5); margin-bottom: 2.5rem; }
         .hero-subtitle.bottom { color: var(--accent); margin-top: 2.5rem; opacity: 0.8; }
 
         .btn-enter-club {
-            padding: 1.2rem 3.5rem; background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.3); color: #fff;
-            font-size: 0.9rem; font-weight: bold; letter-spacing: 6px;
-            cursor: pointer; transition: 0.5s; text-transform: uppercase;
-            position: relative; z-index: 11;
+            padding: 1.2rem 3.5rem; background: transparent; border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff; font-size: 0.9rem; font-weight: bold; letter-spacing: 6px;
+            cursor: pointer; transition: 0.5s; text-transform: uppercase; position: relative; z-index: 11;
         }
-
-        .btn-enter-club:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 30px rgba(255, 0, 64, 0.3); letter-spacing: 8px; }
+        .btn-enter-club:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 30px rgba(255, 0, 64, 0.3); }
 
         .main-wrapper { 
-            height: 100vh; display: flex; align-items: center; 
-            justify-content: center; width: 100%; position: relative; 
-            z-index: 5; gap: 60px; 
+            height: 100vh; display: flex; align-items: center; justify-content: center; 
+            width: 100%; position: relative; z-index: 5; gap: 60px;
+            transition: gap 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        .main-wrapper.auth-active { gap: 0; }
 
-        .vamp-illustration {
-            max-height: 85vh; width: auto; z-index: 4;
-            opacity: 0; transform: translateX(-50px);
-            transition: all 1.2s ease-out; pointer-events: none;
-            -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
-            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+        /* --- SECCIÓN DESCRIPCIÓN + MASCOTA --- */
+        .vamp-illustration { 
+            display: flex; align-items: center; gap: 40px; max-height: 85vh; 
+            opacity: 0; transform: translateX(-50px); transition: all 1s ease-out; 
+            z-index: 4; pointer-events: none; 
         }
-
         .vamp-illustration.active { opacity: 1; transform: translateX(0); }
         
-        .login-box {
-            background: var(--card); padding: 3.5rem;
-            border: 1px solid var(--input-border); width: 100%; max-width: 380px;
-            text-align: center; box-shadow: 0 0 60px rgba(0,0,0,1);
-            backdrop-filter: blur(20px); z-index: 5;
-            opacity: 0; transform: translateY(40px);
-            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none;
+        .vamp-side-info {
+            max-width: 300px; text-align: right; font-family: 'Cinzel', serif;
+            border-right: 2px solid var(--accent); padding-right: 25px;
+        }
+        .vamp-side-info span {
+            display: block; color: var(--accent); font-size: 0.9rem; letter-spacing: 5px;
+            font-weight: 800; margin-bottom: 15px; text-shadow: 0 0 10px var(--accent);
+        }
+        .vamp-side-info p { font-size: 0.7rem; line-height: 1.8; color: #ccc; margin-bottom: 15px; letter-spacing: 0.5px; }
+        .vamp-side-info b { color: #fff; text-shadow: 0 0 5px var(--accent); }
+
+        .vamp-illustration img { 
+            max-height: 80vh; width: auto; 
+            -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%); 
+            mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
         }
 
+        /* --- CAJA DE LOGIN & CONSOLA --- */
+        .login-box {
+            background: var(--card); padding: 3.5rem; border: 1px solid var(--input-border);
+            width: 100%; max-width: 380px; text-align: center; box-shadow: 0 0 60px rgba(0,0,0,1);
+            backdrop-filter: blur(20px); z-index: 5; opacity: 0; transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none;
+            min-height: 420px; display: flex; flex-direction: column; justify-content: center;
+        }
         .login-box.active { opacity: 1; transform: translateY(0); pointer-events: all; }
+        .login-box.centered { max-width: 450px; border-color: var(--accent); }
 
-        .brand-container { display: flex; align-items: center; justify-content: center; margin-bottom: 0.8rem; }
-        
+        #console-out {
+            text-align: left; font-family: 'Courier New', monospace; font-size: 0.65rem; 
+            color: var(--terminal); line-height: 1.4; display: none;
+        }
+
         .input-field { width: 100%; padding: 16px; margin-bottom: 1.2rem; background: #000; border: 1px solid #222; color: white; outline: none; transition: 0.4s; font-size: 0.75rem; letter-spacing: 2px; box-sizing: border-box;}
         .input-field:focus { border-color: var(--accent); }
         
         .btn-vamped { width: 100%; padding: 16px; background: var(--accent); border: none; color: white; font-weight: bold; cursor: pointer; letter-spacing: 3px; text-transform: uppercase; margin-top: 1.5rem; }
-
-        .bat { position: absolute; font-size: 24px; pointer-events: none; z-index: 1000; animation: fly 1.5s ease-out forwards; }
-        @keyframes fly { 0% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(var(--tw), var(--th)) scale(0); opacity: 0; } }
         
-        #error-msg { color: var(--accent); font-size: 0.7rem; margin-top: 1.5rem; min-height: 20px; letter-spacing: 1px; text-transform: uppercase; }
-
-        /* LINK DE REGISTRO RESTAURADO */
-        .register-link { 
-            display: block; 
-            margin-top: 2.5rem; 
-            font-size: 0.65rem; 
-            color: #666; 
-            text-decoration: none; 
-            letter-spacing: 1px;
-            transition: 0.3s;
+        .btn-radar {
+            display: none; width: 100%; padding: 16px; background: transparent; border: 1px solid var(--terminal);
+            color: var(--terminal); font-weight: bold; cursor: pointer; letter-spacing: 4px;
+            text-transform: uppercase; margin-top: 2rem; animation: pulseGreen 1s infinite alternate;
         }
-        .register-link span { color: var(--accent); font-weight: 700; transition: 0.3s; }
+        @keyframes pulseGreen { from { box-shadow: 0 0 5px var(--terminal); } to { box-shadow: 0 0 20px var(--terminal); background: rgba(0, 255, 136, 0.1); } }
 
-        .register-link:hover { color: #fff; }
-        .register-link:hover span { text-shadow: 0 0 10px var(--accent); }
+        /* --- EFECTOS --- */
+        .bat { position: absolute; font-size: 80px; pointer-events: none; z-index: 1000; filter: drop-shadow(0 0 15px var(--accent)); animation: fly 1.5s forwards; }
+        @keyframes fly { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; } 100% { transform: translate(var(--tw), var(--th)) scale(1.2); opacity: 0; } }
+        
+        #error-msg { color: var(--accent); font-size: 0.65rem; margin-top: 1rem; text-transform: uppercase; letter-spacing: 1px; }
 
-        @media (max-width: 900px) {
-            .vamp-illustration { display: none; }
-            .main-wrapper { padding: 20px; }
-        }
+        @media (max-width: 1100px) { .vamp-side-info { display: none; } }
+        @media (max-width: 900px) { .vamp-illustration { display: none; } }
     </style>
 </head>
 <body>
+
+    <div id="malware-overlay">
+        <div class="malware-skull"></div>
+    </div>
 
     <video autoplay muted loop id="bg-video">
         <source src="https://assets.mixkit.co/videos/preview/mixkit-slow-motion-of-a-dj-hand-mixing-on-a-turntable-31958-large.mp4" type="video/mp4">
     </video>
 
     <div id="hero-entrance">
-        <h1 class="main-logo">VAMPER</h1>
+        <h1 class="main-logo" id="glitch-trigger">VAMPER</h1>
         <p class="hero-subtitle top">EVERYTHING YOU WANT</p>
-        <button class="btn-enter-club" onclick="spawnBats(event); transitionToLogin()">JOIN THE CLUB</button>
+        <button class="btn-enter-club" id="main-btn" onclick="spawnBats(event); transitionToLogin()">JOIN THE CLUB</button>
         <p class="hero-subtitle bottom">ALL NIGHT</p>
     </div>
 
-   <div class="main-wrapper">
-    <div id="vampChar" class="vamp-illustration">
-        <div class="vamp-side-info">
-            <span>SOCIAL ROOM</span>
-            <p>Vamper es tu conexión exclusiva con la noche. Una Social Room diseñada para conocer gente y expandir tu círculo mientras disfrutas de comida y botillería con delivery toda la noche.</p>
-            <p>Descubre los mejores panoramas de la zona o impulsa tus propios servicios de comida y transporte dentro de nuestra red, <b>sin costos de comisión</b>.</p>
+    <div class="main-wrapper">
+        <div id="vampChar" class="vamp-illustration">
+            <div class="vamp-side-info">
+                <span>SOCIAL ROOM</span>
+                <p>Vamper es tu conexión exclusiva con la noche. Una Social Room diseñada para conocer gente y expandir tu círculo mientras disfrutas de comida y botillería con delivery toda la noche.</p>
+                <p>Descubre los mejores panoramas de la zona o impulsa tus propios servicios de comida y transporte dentro de nuestra red, <b>sin costos de comisión</b>.</p>
+            </div>
+            <img src="/img/chica-demonio.jpg" alt="Vamper Mascot">
         </div>
-        <img src="/img/chica-demonio.jpg" alt="Vamper Mascot">
-    </div>
 
-    <div class="login-box" id="loginBox">
-        <div class="brand-container">
-            <h2 class="neon-vamp">VAMPER</h2>
-        </div>
-        <p style="font-size: 0.65rem; letter-spacing: 4px; color: var(--accent); margin-bottom: 3rem; text-transform: uppercase; font-weight: 700;">Members Only Access</p>
-        
-        <form id="vampedLoginForm">
-            <input type="email" id="email" class="input-field" placeholder="USER EMAIL" required>
-            <input type="password" id="password" class="input-field" placeholder="PASSWORD" required>
-            <button type="submit" class="btn-vamped">AUTHENTICATE</button>
-        </form>
+        <div class="login-box" id="loginBox">
+            <div id="login-content">
+                <h2 style="font-size: 2rem; letter-spacing: 10px; margin: 0; color: #fff; font-weight: 800; text-transform: uppercase; text-shadow: 0 0 20px var(--accent);">VAMPER</h2>
+                <p style="font-size: 0.65rem; letter-spacing: 4px; color: var(--accent); margin-bottom: 3rem; text-transform: uppercase; font-weight: 700;">Members Only Access</p>
+                
+                <form id="vampedLoginForm">
+                    <input type="email" id="email" class="input-field" placeholder="USER EMAIL" required>
+                    <input type="password" id="password" class="input-field" placeholder="PASSWORD" required>
+                    <button type="submit" class="btn-vamped">AUTHENTICATE</button>
+                </form>
+                <p style="margin-top: 2.5rem; font-size: 0.65rem; color: #666; letter-spacing: 1px;">
+                    NOT A MEMBER? 
+                    <a href="register.html" style="color:var(--accent); text-decoration: none; font-weight: bold; cursor:pointer;">
+                        REQUEST ACCESS HERE
+                    </a>
+                </p>
+                <div id="error-msg"></div>
+            </div>
 
-        <a href="/register.html" class="register-link">
-            NOT A MEMBER? <span>REQUEST ACCESS HERE</span>
-        </a>
-        <div id="error-msg"></div>
-    </div>
-</div>
-
-
-<style>/* Modificación del contenedor de la ilustración */
-.vamp-illustration {
-    display: flex;
-    align-items: center;
-    gap: 30px;
-    max-height: 85vh;
-    opacity: 0;
-    transform: translateX(-50px);
-    transition: all 1.2s ease-out;
-    z-index: 4;
-    pointer-events: none;
-}
-
-.vamp-illustration.active { 
-    opacity: 1; 
-    transform: translateX(0); 
-}
-
-/* Estilo para el texto a la izquierda de la chica */
-.vamp-side-info {
-    max-width: 280px;
-    text-align: right;
-    font-family: 'Cinzel', serif; /* Asegúrate de tener Cinzel cargada */
-    border-right: 1px solid var(--accent);
-    padding-right: 25px;
-}
-
-.vamp-side-info span {
-    display: block;
-    color: var(--accent);
-    font-size: 0.8rem;
-    letter-spacing: 5px;
-    font-weight: 800;
-    margin-bottom: 15px;
-    text-shadow: 0 0 10px var(--accent);
-}
-
-.vamp-side-info p {
-    font-size: 0.65rem;
-    line-height: 1.8;
-    color: #ccc;
-    margin-bottom: 15px;
-    letter-spacing: 0.5px;
-}
-
-.vamp-side-info b {
-    color: #fff;
-    text-shadow: 0 0 5px var(--accent);
-}
-
-.vamp-illustration img {
-    max-height: 80vh;
-    width: auto;
-    -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
-    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
-}</style>
-
-
+            <div id="console-out"></div>
+            <button id="btn-radar" class="btn-radar" onclick="window.location.href='/radar.html'">[ ENTRAR AL RADAR ]</button>
         </div>
     </div>
 
     <script>
-        localStorage.removeItem('vamped_token');
-        localStorage.removeItem('vamped_user');
+        const overlay = document.getElementById('malware-overlay');
+        const hero = document.getElementById('hero-entrance');
+        const logo = document.getElementById('glitch-trigger');
+        
+        function triggerMalwareFlash(duration = 100) {
+            overlay.style.display = 'flex';
+            document.body.classList.add('shake-effect');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                document.body.classList.remove('shake-effect');
+            }, duration);
+        }
+
+        logo.addEventListener('mouseenter', () => {
+            if(Math.random() > 0.5) {
+                triggerMalwareFlash(60);
+                setTimeout(() => triggerMalwareFlash(250), 150);
+            }
+        });
 
         function spawnBats(e) {
-            const container = document.body;
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 20; i++) {
                 const bat = document.createElement('div');
                 bat.className = 'bat'; bat.innerText = '🦇';
                 bat.style.left = e.clientX + 'px'; bat.style.top = e.clientY + 'px';
-                bat.style.setProperty('--tw', (Math.random()-0.5)*1200 + 'px');
-                bat.style.setProperty('--th', (Math.random()-0.5)*1200 + 'px');
-                container.appendChild(bat);
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 600 + Math.random() * 600;
+                bat.style.setProperty('--tw', Math.cos(angle) * dist + 'px');
+                bat.style.setProperty('--th', Math.sin(angle) * dist + 'px');
+                document.body.appendChild(bat);
                 setTimeout(() => bat.remove(), 1500);
             }
         }
 
         function transitionToLogin() {
-            const hero = document.getElementById('hero-entrance');
             hero.style.opacity = '0';
-            hero.style.transform = 'scale(1.1)';
-            
             setTimeout(() => {
                 hero.style.display = 'none';
                 document.getElementById('loginBox').classList.add('active');
@@ -280,14 +257,30 @@
 
         document.getElementById('vampedLoginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            const wrapper = document.querySelector('.main-wrapper');
+            const loginBox = document.getElementById('loginBox');
+            const vampChar = document.getElementById('vampChar');
+            
+            // Ocultar ilustración y centrar consola
+            vampChar.style.opacity = '0'; 
+            setTimeout(() => { vampChar.style.display = 'none'; }, 500);
+            
+            wrapper.classList.add('auth-active');
+            loginBox.classList.add('centered');
+            triggerMalwareFlash(150);
+
+            const loginContent = document.getElementById('login-content');
+            const consoleOut = document.getElementById('console-out');
+            const radarBtn = document.getElementById('btn-radar');
             const errorMsg = document.getElementById('error-msg');
-            errorMsg.style.color = "white";
-            errorMsg.innerText = "VERIFICANDO CREDENCIALES...";
 
             const payload = {
                 email: document.getElementById('email').value,
                 password: document.getElementById('password').value
             };
+
+            errorMsg.innerText = "VERIFICANDO...";
 
             try {
                 const res = await fetch('/api/auth/login', {
@@ -299,19 +292,53 @@
 
                 if (res.ok) {
                     localStorage.setItem('vamped_token', data.token);
-                    errorMsg.style.color = "#00ff88";
-                    errorMsg.innerText = "ACCESO CONCEDIDO...";
-                    setTimeout(() => { window.location.href = data.redirect || '/dashboard'; }, 800);
+                    loginContent.style.display = 'none';
+                    consoleOut.style.display = 'block';
+
+                    const lines = [
+                        { t: "> INICIANDO DECODIFICACIÓN...", c: "var(--terminal)" },
+                        { t: "> PROTOCOLO VAMPER_MIND V6.6.6 ACTIVO.", c: "var(--terminal)" },
+                        { t: "> [!] ADVERTENCIA: CONEXIÓN NO SEGURA DETECTADA.", c: "var(--accent)" },
+                        { t: "------------------------------------------", c: "#333" },
+                        { t: "ESTÁS ENTRANDO EN UNA INSTANCIA DEEP WEB.", c: "var(--accent)" },
+                        { t: "ESTO NO ES UNA APP DE COMIDA TRADICIONAL.", c: "#fff" },
+                        { t: "Suministros ilegales. Compra/Venta no trazable.", c: "#fff" },
+                        { t: "Objetos de Clase V y Suministros Orgánicos.", c: "#fff" },
+                        { t: "RECUERDA: Al aceptar, tu IP queda vinculada.", c: "var(--accent)" },
+                        { t: "El Mazda negro ya conoce tu ubicación.", c: "#fff" },
+                        { t: "No hagas preguntas. No mires a los ojos.", c: "var(--accent)" },
+                        { t: "Suministro disponible TODA LA NOCHE.", c: "#fff" },
+                        { t: "------------------------------------------", c: "#333" },
+                        { t: "> ACCESO CONCEDIDO. BIENVENIDO AL CLUB.", c: "var(--terminal)" }
+                    ];
+
+                    let i = 0;
+                    function typeLine() {
+                        if (i < lines.length) {
+                            const p = document.createElement('div');
+                            p.style.color = lines[i].c;
+                            p.style.marginBottom = "5px";
+                            p.innerHTML = lines[i].t;
+                            consoleOut.appendChild(p);
+                            if(Math.random() > 0.9) triggerMalwareFlash(50);
+                            i++;
+                            setTimeout(typeLine, 140 + (Math.random() * 100));
+                        } else {
+                            setTimeout(() => {
+                                radarBtn.style.display = 'block';
+                                triggerMalwareFlash(400);
+                            }, 800);
+                        }
+                    }
+                    typeLine();
                 } else {
-                    errorMsg.style.color = "var(--accent)";
-                    errorMsg.innerText = data.msg || "ERROR DE ACCESO";
+                    errorMsg.innerText = data.msg || "ACCESO DENEGADO";
                 }
             } catch (err) {
-                console.warn("Simulación de entrada activada.");
-                setTimeout(() => {
-                    errorMsg.style.color = "#00ff88";
-                    errorMsg.innerText = "MODO DESARROLLADOR: ACCESO OK";
-                }, 1000);
+                loginContent.style.display = 'none';
+                consoleOut.style.display = 'block';
+                consoleOut.innerHTML = "<div style='color:orange'>> SERVIDOR OFFLINE: BYPASS ACTIVO.</div>";
+                setTimeout(() => { radarBtn.style.display = 'block'; }, 1000);
             }
         });
     </script>

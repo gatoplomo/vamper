@@ -1,0 +1,152 @@
+{
+    "Francisca": {
+        "nickname": "Francisca",
+        "folder": "bots",
+        "status": "ACTIVE"
+    },
+    "Mannager": {
+        "nickname": "Mannager",
+        "folder": "bots",
+        "status": "ACTIVE"
+    },
+    "Mateo": {
+        "nickname": "Mateo",
+        "folder": "bots",
+        "status": "ACTIVE"
+    },
+    "Moderator": {
+        "nickname": "Moderator",
+        "folder": "bots",
+        "status": "ACTIVE"
+    },
+    "Tom": {
+        "nickname": "Tom",
+        "folder": "bots",
+        "status": "ACTIVE"
+    },
+    "Vamper_Girl": {
+        "nickname": "Vamper_Girl",
+        "folder": "bots",
+        "status": "ACTIVE"
+    },
+    "Botilleria": {
+        "nickname": "Botilleria",
+        "folder": "bots2",
+        "status": "CORRUPT/MISSING"
+    },
+    "Comida": {
+        "nickname": "Comida",
+        "folder": "bots2",
+        "status": "ACTIVE"
+    },
+    "Emergencias": {
+        "nickname": "Emergencias",
+        "folder": "bots2",
+        "status": "CORRUPT/MISSING"
+    },
+    "Locales": {
+        "nickname": "Locales",
+        "folder": "bots2",
+        "status": "CORRUPT/MISSING"
+    },
+    "Transporte": {
+        "nickname": "Transporte",
+        "folder": "bots2",
+        "status": "CORRUPT/MISSING"
+    },
+    "Vamper_Box": {
+        "nickname": "Vamper_Box",
+        "folder": "bots2",
+        "status": "CORRUPT/MISSING"
+    },
+    "Akerman": {
+        "nickname": "Akerman",
+        "folder": "bots3",
+        "status": "CORRUPT/MISSING"
+    },
+    "Anonimo_X": {
+        "nickname": "Anonimo_X",
+        "folder": "bots3",
+        "status": "ACTIVE"
+    },
+    "Asuka": {
+        "nickname": "Asuka",
+        "folder": "bots3",
+        "status": "CORRUPT/MISSING"
+    },
+    "Cami": {
+        "nickname": "Cami",
+        "folder": "bots3",
+        "status": "CORRUPT/MISSING"
+    },
+    "Curzed": {
+        "nickname": "Curzed",
+        "folder": "bots3",
+        "status": "ACTIVE"
+    },
+    "Nada_personal": {
+        "nickname": "Nada_personal",
+        "folder": "bots3",
+        "status": "CORRUPT/MISSING"
+    },
+    "Nadie": {
+        "nickname": "Nadie",
+        "folder": "bots3",
+        "status": "CORRUPT/MISSING"
+    },
+    "Pau": {
+        "nickname": "Pau",
+        "folder": "bots3",
+        "status": "ACTIVE"
+    },
+    "Poting": {
+        "nickname": "Poting",
+        "folder": "bots3",
+        "status": "CORRUPT/MISSING"
+    },
+    "Sofía": {
+        "nickname": "Sofía",
+        "folder": "bots3",
+        "status": "CORRUPT/MISSING"
+    },
+    "Tony": {
+        "nickname": "Tony",
+        "folder": "bots3",
+        "status": "ACTIVE"
+    },
+    "Tyler": {
+        "nickname": "Tyler",
+        "folder": "bots3",
+        "status": "ACTIVE"
+    },
+    "Vacio": {
+        "nickname": "Vacio",
+        "folder": "bots3",
+        "status": "ACTIVE"
+    },
+    "Barber_shop": {
+        "nickname": "Barber_shop",
+        "folder": "bots4",
+        "status": "CORRUPT/MISSING"
+    },
+    "Blanca_nieves": {
+        "nickname": "Blanca_nieves",
+        "folder": "bots4",
+        "status": "CORRUPT/MISSING"
+    },
+    "Florinda": {
+        "nickname": "Florinda",
+        "folder": "bots4",
+        "status": "CORRUPT/MISSING"
+    },
+    "Perfumes_arabes": {
+        "nickname": "Perfumes_arabes",
+        "folder": "bots4",
+        "status": "CORRUPT/MISSING"
+    },
+    "Servicios_Mecanicos": {
+        "nickname": "Servicios_Mecanicos",
+        "folder": "bots4",
+        "status": "CORRUPT/MISSING"
+    }
+}

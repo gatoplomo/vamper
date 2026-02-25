@@ -10,7 +10,7 @@ if (!fs.existsSync(dirDestino)) {
     fs.mkdirSync(dirDestino, { recursive: true });
 }
 
-// CORRECCIÓN 1: El esquema debe conocer 'nradar' para no filtrarlo
+// 1. ESQUEMA SINCRONIZADO: Ahora el Seed "sabe" qué es is_human
 const User = mongoose.model('User', new mongoose.Schema({
     nickname: String,
     email: { type: String, unique: true },
@@ -20,9 +20,13 @@ const User = mongoose.model('User', new mongoose.Schema({
     description: String,
     public_description: String,
     age: Number,
-    role: { type: String, enum: ['staff', 'client'], default: 'client' },
-    nradar: { type: Number, default: 2 }, // <--- CAMPO AGREGADO
+    role: { type: String, enum: ['staff', 'client'], default: 'staff' },
+    nradar: { type: Number, default: 1 }, 
     accountType: { type: String, default: 'bot' },
+    
+    // CAMPO CRÍTICO: Definido aquí para poder manipularlo
+    is_human: { type: Boolean, default: false }, 
+    
     botConfig: { type: mongoose.Schema.Types.Mixed, default: {} },
     location: {
         type: { type: String, default: 'Point' },
@@ -30,9 +34,9 @@ const User = mongoose.model('User', new mongoose.Schema({
     }
 }));
 
-const procesarCarpeta = async (directorio, defaultRole, hashedPass) => {
+const procesarCarpeta = async (directorio, hashedPass) => {
     if (!fs.existsSync(directorio)) {
-        console.warn(`⚠️ El directorio ${directorio} no existe.`);
+        console.warn(`⚠️ Directorio ausente: ${directorio}`);
         return;
     }
 
@@ -50,75 +54,69 @@ const procesarCarpeta = async (directorio, defaultRole, hashedPass) => {
                 botJson = JSON.parse(fs.readFileSync(rutaJson, 'utf-8'));
             }
 
-            const rolFinal = botJson.role || defaultRole;
-            const edadFinal = botJson.age || (Math.floor(Math.random() * 10) + 20);
-            const descFinal = botJson.personality || "Un fragmento del legado.";
-
-            let estadoFinal;
-            if (botJson.status_list && Array.isArray(botJson.status_list)) {
-                estadoFinal = botJson.status_list[Math.floor(Math.random() * botJson.status_list.length)];
-            } else {
-                estadoFinal = botJson.status || "Sincronizando...";
-            }
+            const descFinal = botJson.personality || "Entidad del sistema Vamper.";
+            const publicDescFinal = botJson.public_description || "ACCESO RESTRINGIDO: PERSONAL DE VAMPER.";
 
             const todasLasFotos = fs.readdirSync(rutaCarpetaBot);
-            const nombreEsperado = `${nombreBot}_profile`.toLowerCase();
-            const fotoPerfil = todasLasFotos.find(f => f.toLowerCase().startsWith(nombreEsperado));
+            const fotoPerfil = todasLasFotos.find(f => f.toLowerCase().includes('profile'));
 
             if (!fotoPerfil) {
-                console.log(`⏩ Saltando ${nombreBot}: No se encontró foto de perfil.`);
+                console.log(`⏩ Saltando ${nombreBot}: Perfil incompleto.`);
                 continue;
             }
 
             const extension = path.extname(fotoPerfil);
-            const nuevoNombreArchivo = `bot_staff_${nombreBot.toLowerCase()}_${Date.now()}${extension}`;
+            const nuevoNombreArchivo = `staff_core_${nombreBot.toLowerCase()}_${Date.now()}${extension}`;
             fs.copyFileSync(path.join(rutaCarpetaBot, fotoPerfil), path.join(dirDestino, nuevoNombreArchivo));
 
-            // CORRECCIÓN 2: Inyectar nradar explícitamente en el update
+            // 2. INYECCIÓN EXPLÍCITA: Forzamos is_human en false
             await User.findOneAndUpdate(
                 { nickname: nombreBot },
                 {
                     nickname: nombreBot,
-                    email: `bot_${nombreBot.toLowerCase().replace(/\s/g, '')}@vamper.cl`,
+                    email: `admin_${nombreBot.toLowerCase().replace(/\s/g, '')}@vamper.cl`,
                     password: hashedPass,
                     photo: `/uploads/users/${nuevoNombreArchivo}`, 
-                    status: estadoFinal,
-                    description: descFinal,
-                    public_description: descFinal,
-                    age: edadFinal,
-                    role: rolFinal,
-                    nradar: 1, // <--- FORZADO A RADAR 1
+                    status: botJson.status || "MONITOREANDO...",
+                    description: descFinal, 
+                    public_description: publicDescFinal, 
+                    age: botJson.age || 0,
+                    role: 'staff',
+                    nradar: 1,
                     accountType: 'bot',
+                    
+                    is_human: false, // <--- Aquí matamos el 'true' por defecto
+                    
                     botConfig: botJson, 
                     location: {
                         type: 'Point',
-                        coordinates: [-71.54 + (Math.random() * 0.05), -33.02 + (Math.random() * 0.05)]
+                        coordinates: [-71.21, -32.84]
                     }
                 },
-                { upsert: true, new: true, setDefaultsOnInsert: false } 
+                { upsert: true, new: true }
             );
 
-            console.log(`✨ [RADAR 1] Sincronizado: ${nombreBot}`);
+            console.log(`🛡️  [STAFF INYECTADO]: ${nombreBot} (Sintético)`);
         } catch (err) {
-            console.error(`❌ Error en ${nombreBot}:`, err.message);
+            console.error(`🔥 Falla en núcleo ${nombreBot}:`, err.message);
         }
     }
 };
 
-const seedBotsConFotos = async () => {
+const seedStaffConCuidado = async () => {
     try {
         await mongoose.connect('mongodb://3.137.140.95:27017/vamped');
-        const hashedPass = await bcrypt.hash('123456', 10);
+        const hashedPass = await bcrypt.hash('clave_maestra_vamper', 10);
 
-        console.log("🔍 Iniciando sincronización de carpeta 'bots' (STAFF -> RADAR 1)...");
-        await procesarCarpeta(dirOrigenPrincipal, 'staff', hashedPass);
+        console.log("🌑 Sincronizando Mentes Maestras (STAFF)...");
+        await procesarCarpeta(dirOrigenPrincipal, hashedPass);
 
-        console.log("🚀 Ecosistema Vamper (Staff) en línea con Radar 1.");
+        console.log("✅ Staff Vamper en línea. Identidades sintéticas validadas.");
         process.exit(0);
     } catch (err) {
-        console.error("🔥 Error crítico:", err);
+        console.error("💀 Colapso de sistema:", err);
         process.exit(1);
     }
 };
 
-seedBotsConFotos();
+seedStaffConCuidado();

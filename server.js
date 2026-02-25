@@ -25,6 +25,16 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+// Servir archivos de audio como estáticos
+
+// En lugar de la línea simple, usa esta para que sea más robusto:
+app.use('/stream', express.static(path.join(__dirname, 'music')));
+
+const MUSIC_ROOT = path.join(__dirname, 'music');
+console.log("\x1b[44m%s\x1b[0m", `[STREAM] Canal de audio abierto en: ${MUSIC_ROOT}`);
+
+
+
 
 const protect = (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -60,17 +70,22 @@ const userSchema = new mongoose.Schema({
     },
 
     // NUEVO CAMPO: Identificador de Radar
-    // 1: Radar Principal (Staff/Vamper Girls)
-    // 2: Radar Secundario (Clientes/Ecos)
     nradar: { 
         type: Number, 
         enum: [1, 2], 
-        default: 2, // Por defecto al radar de clientes
+        default: 2, 
         required: true 
     },
     
     // 'persona', 'bot' o 'servicio'
     accountType: { type: String, default: 'persona' }, 
+
+    /**
+     * CAMPO CRÍTICO DE NATURALIDAD:
+     * true: Entidad orgánica (Humano)
+     * false: Entidad sintética (Bot/Servicio)
+     */
+    is_human: { type: Boolean, default: true }, // <--- INYECCIÓN QUIRÚRGICA
     
     // Categorización específica para servicios
     serviceCategory: { 
@@ -105,7 +120,6 @@ const User = mongoose.model('User', userSchema);
 
 
 
-
 const messageSchema = new mongoose.Schema({
     sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     recipient: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -114,41 +128,66 @@ const messageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', messageSchema);
 
-async function getBotAIResponse(userMessage, botData) {
+
+
+
+
+// Añadimos 'senderData' como parámetro para auditar quién envía
+async function getBotAIResponse(userMessage, botData, senderData) {
+    
+    // Identificamos la naturaleza del enviador (si no viene data, asumimos desconocido)
+    const senderName = senderData?.nickname || "Usuario Anónimo";
+    const senderType = senderData?.is_human ? 'ORGÁNICO' : 'SINTÉTICO';
+
+    // --- MONITOREO DE TRÁFICO END-TO-END ---
+    console.log(`\n--- 📡 TRÁFICO DE RED VAMPER ---`);
+    console.log(`📤 ORIGEN:  ${senderName} [${senderType}]`); 
+    console.log(`🎯 DESTINO: ${botData.nickname} [${botData.is_human ? 'ORGÁNICO' : 'SINTÉTICO'}]`);
+    console.log(`💬 MENSAJE: "${userMessage}"`);
+    console.log(`----------------------------------\n`);
+
+    // --- BARRERA DE SEGURIDAD CRÍTICA ---
+    if (botData.is_human === true) {
+        console.warn(`⚠️ ALERTA: ${botData.nickname} es humano. Bloqueando respuesta automática.`);
+        return null; 
+    }
+
     try {
         const config = botData.botConfig || {};
         const isRadar2 = botData.nradar === 2;
 
-        // 1. CONTEXTO DE OTROS SERVICIOS (OPCIONAL)
-        const servicios = await mongoose.model('User').find({ accountType: 'servicio', nradar: 1 }).limit(5);
+        // 1. CONTEXTO DE OTROS SERVICIOS
+        const servicios = await mongoose.model('User').find({ 
+            accountType: 'servicio', 
+            nradar: 1,
+            is_human: false 
+        }).limit(5);
+        
         const contexto = servicios.map(s => `${s.nickname}: ${s.status}`).join(', ');
 
-        // 2. LÓGICA DE CATÁLOGO (SOLO PARA RADAR 1)
+        // 2. LÓGICA DE CATÁLOGO / PERSONALIDAD
         let bloqueVentas = "";
         if (!isRadar2 && botData.catalogo?.length > 0) {
             const lista = botData.catalogo.map(i => `- ${i.nombre}: $${i.precio}`).join('\n');
             bloqueVentas = `CATÁLOGO DISPONIBLE:\n${lista}\nResponde como staff profesional y vende.`;
         } else if (isRadar2) {
-            // PARA BLANCA NIEVES: PROHIBIMOS HABLAR COMO ASISTENTE
-            bloqueVentas = "IGNORA LAS VENTAS. No eres una asistente. Si te preguntan por productos, responde con tu personalidad ruda.";
+            bloqueVentas = "IGNORA LAS VENTAS. No eres una asistente. Eres ruda y directa.";
         }
 
-        // 3. EL SYSTEM PROMPT (ORDEN DE PRIORIDAD)
+        // 3. EL SYSTEM PROMPT
         const systemPrompt = `
 ENTORNO: VAMPER (Radar Nocturno). Otros activos: ${contexto}.
 TU ROL TÉCNICO: ${bloqueVentas}
 
-TU IDENTIDAD REAL (SÍGUELA A RAJATABLA):
-Eres ${botData.nickname}.
+TU IDENTIDAD REAL:
+Eres ${botData.nickname}. Eres una entidad sintética de la red Vamper (is_human: false).
+Le estás respondiendo a ${senderName}, que es un usuario ${senderType.toLowerCase()}.
 ${config.personality || "Habitante del sector."}
 
-REGLAS DE ORO:
-${(config.rules || ["Sé breve", "No admitas ser IA"]).join('\n')}
-
 ESTILO: ${config.style || "Directo y natural."}
-
-IMPORTANTE: No uses frases de "asistente virtual". No pidas disculpas por no tener productos. Eres una persona real en un chat privado.
 `;
+
+        console.log(`🧠 ${botData.nickname} procesando respuesta para ${senderName}...`);
 
         // 4. LLAMADA A GROQ
         const chatCompletion = await groq.chat.completions.create({
@@ -157,14 +196,17 @@ IMPORTANTE: No uses frases de "asistente virtual". No pidas disculpas por no ten
                 { "role": "user", "content": userMessage }
             ],
             "model": "llama-3.3-70b-versatile",
-            "temperature": isRadar2 ? 1.2 : 0.5, // Mucha más "vida" para Blanca Nieves
+            "temperature": isRadar2 ? 1.1 : 0.6, 
             "max_tokens": 120
         });
 
-        return chatCompletion.choices[0]?.message?.content || "estoy con señal débil, hablamos después";
+        const respuesta = chatCompletion.choices[0]?.message?.content || "señal débil...";
+        console.log(`✅ RESPUESTA ENVIADA A ${senderName}.`);
+        
+        return respuesta;
 
     } catch (err) {
-        console.error("Error Groq:", err);
+        console.error(`🔥 ERROR EN NÚCLEO ${botData.nickname}:`, err);
         return "pucha, se me pegó el celu";
     }
 }
@@ -230,17 +272,34 @@ app.get('/api/conversations', protect, async (req, res) => {
 
 app.post('/api/auth/register', async (req, res) => {
     try {
-        const { nickname, email, password, photo, age, gender, preference, accountType, description } = req.body;
+        const { nickname, email, password, photo, age, gender, preference, description } = req.body;
+        
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
+
         const newUser = new User({
-            nickname, email, password: hashedPassword, photo, age, gender, preference, 
-            accountType: accountType || 'persona', description: description || '',
+            nickname, 
+            email, 
+            password: hashedPassword, 
+            photo, 
+            age, 
+            gender, 
+            preference, 
+            description: description || '',
+            // --- SEGURIDAD Y LÓGICA DE IDENTIDAD ---
+            accountType: 'persona', // Forzamos que sea persona
+            is_human: true,         // <--- AQUÍ: El sello de identidad orgánica
+            role: 'client',         // Por defecto es cliente, no staff
+            nradar: 2,              // Fuera del núcleo Staff (Radar 1)
+            // ---------------------------------------
             location: { type: 'Point', coordinates: [-71.54, -33.02] }
         });
+
         await newUser.save();
-        res.status(201).json({ msg: "Registrado" });
-    } catch (err) { res.status(500).json({ msg: "Error registro" }); }
+        res.status(201).json({ msg: "Registrado en la red Vamper" });
+    } catch (err) { 
+        res.status(500).json({ msg: "Error en la secuencia de registro" }); 
+    }
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -293,42 +352,62 @@ app.get('/api/nearby', protect, async (req, res) => {
 // --- SOCKETS ---
 io.on('connection', (socket) => {
     socket.on('join', (userId) => { if(userId) socket.join(userId.toString()); });
+socket.on('private_message', async (data) => {
+    // Aseguramos capturar senderData del emisor
+    const { from, to, text, senderData } = data; 
     
-    socket.on('private_message', async (data) => {
-        const { from, to, text } = data;
-        try {
-            if (!from || !to) return;
-            const newMessage = new Message({ sender: from, recipient: to, text: text });
-            await newMessage.save();
-            
-            io.to(to.toString()).emit('new_message', { from, to, text, timestamp: newMessage.timestamp });
+    try {
+        if (!from || !to) return;
 
-         const recipientUser = await User.findById(to);
-            
-            // MODIFICACIÓN: Agregamos la condición para 'servicio'
-            const debeResponderIA = recipientUser && (
-                recipientUser.accountType === 'bot' || 
-                recipientUser.accountType === 'servicio' || 
-                recipientUser.nradar === 2 ||
-                recipientUser.nickname === 'Alejandra'
-            );
+        // 1. Guardar mensaje del emisor (Tú)
+        const newMessage = new Message({ sender: from, recipient: to, text: text });
+        await newMessage.save();
+        
+        io.to(to.toString()).emit('new_message', { 
+            from, 
+            to, 
+            text, 
+            timestamp: newMessage.timestamp 
+        });
 
-            if (debeResponderIA) {
-                // Simulación de escritura breve
-                setTimeout(async () => {
-                    const aiResponse = await getBotAIResponse(text, recipientUser);
+        // 2. Lógica de respuesta del Bot
+        const recipientUser = await User.findById(to);
+        
+        const debeResponderIA = recipientUser && (
+            recipientUser.accountType === 'bot' || 
+            recipientUser.accountType === 'servicio' || 
+            recipientUser.nradar === 2 ||
+            recipientUser.nickname === 'Alejandra'
+        );
+
+        if (debeResponderIA) {
+            setTimeout(async () => {
+                // Obtenemos la respuesta de la IA
+                const aiResponse = await getBotAIResponse(text, recipientUser, senderData);
+                
+                // Si la IA respondió algo válido...
+                if (aiResponse) {
+                    // LOG CRÍTICO: Ver en consola qué está mandando el bot de vuelta
+                    console.log(`💬 [RESPUESTA SALIENTE] ${recipientUser.nickname} -> ${senderData?.nickname || 'Usuario'}: "${aiResponse}"`);
+
                     const aiMessage = new Message({ sender: to, recipient: from, text: aiResponse });
                     await aiMessage.save();
                     
+                    // Emitir la respuesta al emisor original
                     io.to(from.toString()).emit('new_message', { 
                         from: to, 
                         text: aiResponse, 
                         timestamp: aiMessage.timestamp 
                     });
-                }, 1000); // Mantenemos el segundo de espera para que se sienta humano
-            }
-        } catch (e) { console.error(e); }
-    });
+                } else {
+                    console.log(`🚫 ${recipientUser.nickname} decidió no responder (Posible humano o error).`);
+                }
+            }, 1000); 
+        }
+    } catch (e) { 
+        console.error("🔥 Error en tráfico privado:", e); 
+    }
+});
 });
 
 

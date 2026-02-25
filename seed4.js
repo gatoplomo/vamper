@@ -21,7 +21,7 @@ const seedRadar2 = async () => {
             const rutaCarpeta = path.join(dirOrigen, nombreCarpeta);
             const archivos = fs.readdirSync(rutaCarpeta);
 
-            // --- 1. CARGAR MENÚ (SIEMPRE SE LLAMA menu.json) ---
+            // --- 1. CARGAR MENÚ ---
             let catalogoFinal = [];
             let horarioFinal = "No definido";
             const rutaMenu = path.join(rutaCarpeta, 'menu.json');
@@ -37,7 +37,7 @@ const seedRadar2 = async () => {
                 }
             }
 
-            // --- 2. CARGAR IA (EL QUE LLEVA EL NOMBRE DE LA CARPETA) ---
+            // --- 2. CARGAR IA ---
             let botConfigFinal = {};
             const rutaIA = path.join(rutaCarpeta, `${nombreCarpeta}.json`);
 
@@ -56,34 +56,46 @@ const seedRadar2 = async () => {
                 fotoPath = `/uploads/users/${nuevoNombre}`;
             }
 
-            // --- 4. INSERCIÓN ---
+            // --- 4. INSERCIÓN CON MARCA SINTÉTICA ---
             const userDoc = {
                 nickname: nombreCarpeta,
                 email: `r2_${nombreCarpeta.toLowerCase().replace(/\s+/g, '')}@vamped.cl`,
                 password: hashedPass,
                 photo: fotoPath,
                 role: 'staff',
+                
+                // --- IDENTIDAD SINTÉTICA ---
                 nradar: 2, 
-                accountType: 'servicio', // Esto activa el botón de menú en el front
+                is_human: false, // <--- PRECISIÓN: Marcado como entidad no-humana
+                accountType: 'servicio', 
+                
                 botConfig: botConfigFinal,
                 horario: horarioFinal,
-                catalogo: catalogoFinal, // Aquí se guarda el array de productos
+                catalogo: catalogoFinal, 
                 status: 'Frecuencia Secundaria 📡',
                 public_description: botConfigFinal.public_description || 'Servicio activo.',
                 description: botConfigFinal.personality || 'Sin descripción.',
                 lastSeen: new Date(),
                 location: {
                     type: 'Point',
-                    coordinates: [-71.54 + (Math.random() * 0.05), -33.02 + (Math.random() * 0.05)]
+                    coordinates: [
+                        parseFloat((-71.54 + (Math.random() * 0.05)).toFixed(6)),
+                        parseFloat((-33.02 + (Math.random() * 0.05)).toFixed(6))
+                    ]
                 }
             };
 
             await collection.deleteMany({ nickname: nombreCarpeta });
             await collection.insertOne(userDoc);
+            console.log(`🛡️  [RADAR 2] ${nombreCarpeta} inyectado exitosamente.`);
         }
-        console.log(`\n🚀 PROCESO TERMINADO.`);
-    } catch (e) { console.error(e); }
-    finally { mongoose.disconnect(); process.exit(); }
+        console.log(`\n🚀 PROCESO TERMINADO: Todos los servicios de Radar 2 son SINTÉTICOS.`);
+    } catch (e) { 
+        console.error(e); 
+    } finally { 
+        mongoose.disconnect(); 
+        process.exit(); 
+    }
 };
 
 seedRadar2();
