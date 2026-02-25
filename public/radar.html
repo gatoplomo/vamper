@@ -1371,81 +1371,90 @@ function sendMessage() {
     }
 
 async function loadNearby() {
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-        try {
-            const url = `/api/nearby?lng=${pos.coords.longitude}&lat=${pos.coords.latitude}`;
-            const res = await fetch(url, { 
-                headers: { 'Authorization': `Bearer ${token}` } 
-            });
-            
-            const allUsers = await res.json();
+    // --- BYPASS DE SEGURIDAD AWS ---
+    // Eliminamos el envoltorio de navigator.geolocation porque en HTTP bloquea la ejecución.
+    try {
+        // Definimos coordenadas fijas (Bypass)
+        // Esto evita que el navegador pida permiso de ubicación.
+        const mockPos = {
+            coords: {
+                longitude: -71.5518, // Coordenadas por defecto (puedes ajustarlas)
+                latitude: -33.0245
+            }
+        };
 
-            // --- DIAGNÓSTICO DE IDENTIDAD (PRECISIÓN QUIRÚRGICA) ---
-            console.group("📡 ESCANEO DE RADAR: VERIFICACIÓN DE IDENTIDAD");
-            console.log("Total de entidades detectadas:", allUsers.length);
-            // Mostramos una tabla con los campos clave para verificar el booleano
-            console.table(allUsers.map(u => ({
-                nickname: u.nickname,
-                nradar: u.nradar,
-                accountType: u.accountType,
-                is_human: u.is_human // Aquí confirmamos si llega true, false o undefined
-            })));
-            console.groupEnd();
-            // -------------------------------------------------------
+        console.log("🔓 VAMPER_CORE: Bypass de ubicación activo.");
 
-            // 1. Filtramos los dos grupos
-            const group1 = allUsers.filter(u => Number(u.nradar) === 1);
-            const group2 = allUsers.filter(u => Number(u.nradar) === 2);
+        const url = `/api/nearby?lng=${mockPos.coords.longitude}&lat=${mockPos.coords.latitude}`;
+        const res = await fetch(url, { 
+            headers: { 'Authorization': `Bearer ${token}` } 
+        });
+        
+        const allUsers = await res.json();
 
-            nearbyUsers = [...group1, ...group2];
+        // --- DIAGNÓSTICO DE IDENTIDAD (PRECISIÓN QUIRÚRGICA) ---
+        console.group("📡 ESCANEO DE RADAR: VERIFICACIÓN DE IDENTIDAD");
+        console.log("Total de entidades detectadas:", allUsers.length);
+        console.table(allUsers.map(u => ({
+            nickname: u.nickname,
+            nradar: u.nradar,
+            accountType: u.accountType,
+            is_human: u.is_human 
+        })));
+        console.groupEnd();
 
-            const createCardHTML = (u, arrayIndex, isSecondary = false) => {
-                const isService = u.accountType === 'servicio';
-                const nRadar = Number(u.nradar);
-                const isOnline = u.online === true; 
-                const nameColor = isSecondary ? '#00ffcc' : (isService ? 'var(--service)' : 'white');
-                let timeAgo = getTimeAgo(u.lastSeen);
+        // 1. Filtramos los dos grupos
+        const group1 = allUsers.filter(u => Number(u.nradar) === 1);
+        const group2 = allUsers.filter(u => Number(u.nradar) === 2);
 
-                let displayTime = timeAgo;
-                if (nRadar === 1 && isOnline) {
-                    displayTime = "En línea";
-                } else if (!isOnline && timeAgo === "En línea") {
-                    displayTime = "Desconectado";
-                }
+        nearbyUsers = [...group1, ...group2];
 
-                const displayStatus = isOnline ? (u.status || '') : (u.status || "FUERA DE RANGO...");
+        const createCardHTML = (u, arrayIndex, isSecondary = false) => {
+            const isService = u.accountType === 'servicio';
+            const nRadar = Number(u.nradar);
+            const isOnline = u.online === true; 
+            const nameColor = isSecondary ? '#00ffcc' : (isService ? 'var(--service)' : 'white');
+            let timeAgo = getTimeAgo(u.lastSeen);
 
-                return `
-                <div class="col">
-                    <div class="user-card" onclick="openProfileByIndex(${arrayIndex})">
-                        <img src="${u.photo || ''}" style="${isSecondary ? 'filter: brightness(0.8);' : ''}">
-                        <div class="user-info-tag">
-                            <span class="user-name" style="color: ${nameColor}">
-                                ${isOnline ? '<span class="online-dot"></span>' : '<span class="offline-dot"></span>'}
-                                ${u.nickname}${u.age ? ', ' + u.age : ''}
-                            </span>
-                            <span class="time-text">${displayTime}</span>
-                            <span class="user-status-text">${displayStatus}</span>
-                        </div>
+            let displayTime = timeAgo;
+            if (nRadar === 1 && isOnline) {
+                displayTime = "En línea";
+            } else if (!isOnline && timeAgo === "En línea") {
+                displayTime = "Desconectado";
+            }
+
+            const displayStatus = isOnline ? (u.status || '') : (u.status || "FUERA DE RANGO...");
+
+            return `
+            <div class="col">
+                <div class="user-card" onclick="openProfileByIndex(${arrayIndex})">
+                    <img src="${u.photo || ''}" style="${isSecondary ? 'filter: brightness(0.8);' : ''}">
+                    <div class="user-info-tag">
+                        <span class="user-name" style="color: ${nameColor}">
+                            ${isOnline ? '<span class="online-dot"></span>' : '<span class="offline-dot"></span>'}
+                            ${u.nickname}${u.age ? ', ' + u.age : ''}
+                        </span>
+                        <span class="time-text">${displayTime}</span>
+                        <span class="user-status-text">${displayStatus}</span>
                     </div>
-                </div>`;
-            };
+                </div>
+            </div>`;
+        };
 
-            // 3. Renderizamos Radar 1
-            const mainGrid = document.getElementById('main-grid');
-            if(mainGrid) mainGrid.innerHTML = group1.map((u, i) => createCardHTML(u, i, false)).join('');
+        // 3. Renderizamos Radar 1
+        const mainGrid = document.getElementById('main-grid');
+        if(mainGrid) mainGrid.innerHTML = group1.map((u, i) => createCardHTML(u, i, false)).join('');
 
-            // 4. Renderizamos Radar 2
-            const secondaryGrid = document.getElementById('secondary-grid');
-            const offset = group1.length; 
-            if(secondaryGrid) secondaryGrid.innerHTML = group2.map((u, i) => createCardHTML(u, i + offset, true)).join('');
+        // 4. Renderizamos Radar 2
+        const secondaryGrid = document.getElementById('secondary-grid');
+        const offset = group1.length; 
+        if(secondaryGrid) secondaryGrid.innerHTML = group2.map((u, i) => createCardHTML(u, i + offset, true)).join('');
 
-            console.log("✅ Radares sincronizados con estados dinámicos.");
+        console.log("✅ Radares sincronizados con estados dinámicos (Bypass Mode).");
 
-        } catch (error) {
-            console.error("❌ Error en la carga del radar:", error);
-        }
-    });
+    } catch (error) {
+        console.error("❌ Error en la carga del radar:", error);
+    }
 }
 
     function openProfileByIndex(index) {

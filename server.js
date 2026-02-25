@@ -321,6 +321,8 @@ app.get('/api/user/me', protect, async (req, res) => {
     } catch (err) { res.status(500).json({ msg: "Error perfil" }); }
 });
 
+
+/*
 app.get('/api/nearby', protect, async (req, res) => {
     try {
         const lng = parseFloat(req.query.lng) || -71.54;
@@ -347,6 +349,26 @@ app.get('/api/nearby', protect, async (req, res) => {
         res.status(500).json({ msg: "Error radar" }); 
     }
 });
+*/
+
+app.get('/api/nearby', protect, async (req, res) => {
+    try {
+        // BYPASS: Eliminamos el filtro $near para que no pida coordenadas
+        let query = { 
+            _id: { $ne: req.user.id } // Solo evita que te veas a ti mismo
+        };
+
+        // Traemos a todos los usuarios/bots sin importar dónde estén
+        const users = await User.find(query).limit(100);
+        
+        console.log(`📡 [RADAR GLOBAL] Detectadas ${users.length} entidades.`);
+        res.json(users);
+    } catch (err) { 
+        console.error("Error en Radar:", err);
+        res.status(500).json({ msg: "Error radar" }); 
+    }
+});
+
 
 
 // --- SOCKETS CORREGIDOS CON PRECISIÓN Y CONTROL DE SESIÓN ---
